@@ -11,7 +11,7 @@ Adjust the number of `network` resource according to your network bandwidth and 
 Also you can adjust the number of processors to use with the parameter `-j`.
 
 ```
-snakemake --resources netework=1 -j32 --use-conda -pr
+snakemake --resources network=1 -j32 --use-conda -pr
 ```
 
 ### Note
