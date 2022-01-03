@@ -1,0 +1,152 @@
+import pandas as pd
+
+wildcard_constraints:
+    eid = '[^.]+',
+    mark = '[^.]+',
+
+hg19_sizes = 'annotations/hg19.fa.sizes'
+
+eids = [
+    'E003', 'E004', 'E005', 'E006', 'E007',
+    'E016', 'E066', 'E087', 'E114', 'E116',
+    'E118',
+]
+
+marks = [
+    'H3K4me1',
+    'H3K4me3',
+    'H3K9me3',
+    'H3K27me3',
+    'H3K36me3',
+    'H3K27ac',
+    'H3K9ac',
+]
+
+tissue_mapping = pd.read_csv('annotations/tissue_mapping.csv')
+eid2tissue = {r.eid:r.tissue for r in tissue_mapping.to_records()}
+
+eids = ['E003']
+# marks = ['H3K4me1']
+tissues = [eid2tissue[eid] for eid in eids]
+
+# Register target files. 
+tagalign = expand('hist/{eid}-{mark}.sorted.bam.bai', eid=eids, mark=marks)
+coverage = expand('hist/{eid}-{mark}.sorted.bedGraph', eid=eids, mark=marks)
+npz = expand('hist/{eid}-{mark}.npz', eid=eids, mark=marks)
+raw_exp = 'exp/raw_exp.tsv'
+train_meta = 'train.csv'
+
+ALL = []
+ALL.append(tagalign)
+ALL.append(coverage)
+ALL.append(npz)
+ALL.append(raw_exp)
+ALL.append(train_meta)
+
+rule all:
+    input: ALL
+
+rule download_chip_tagalign:
+    output: temp('hist/{eid}-{mark}.tagAlign')
+    resources: network = 1
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/download_chip_tagalign/{eid}-{mark}.tsv'
+    shell:
+        'wget "https://egg2.wustl.edu/roadmap/data/byFileType/alignments/consolidated/{wildcards.eid}-{wildcards.mark}.tagAlign.gz" -O- | gunzip -c > {output}'
+
+rule bedtobam:
+    input: 'hist/{eid}-{mark}.tagAlign'
+    output: temp('hist/{eid}-{mark}.bam')
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/bedtobam/{eid}-{mark}.tsv'
+    shell:
+        'bedtools bedtobam -i {input} -g {hg19_sizes} > {output}'
+
+rule sambamba_sort:
+    input: 'hist/{eid}-{mark}.bam'
+    output: 'hist/{eid}-{mark}.sorted.bam'
+    threads: 4
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/sambamba_sort/{eid}-{mark}.tsv'
+    shell:
+        'sambamba sort -o {output} -t {threads} --tmpdir . {input}'
+
+rule sambamba_index:
+    input: 'hist/{eid}-{mark}.sorted.bam'
+    output: 'hist/{eid}-{mark}.sorted.bam.bai'
+    threads: 4
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/sambamba_index/{eid}-{mark}.tsv'
+    shell:
+        'sambamba index -t {threads} {input}'
+
+rule bedtools_genomecov:
+    input:
+        bam = 'hist/{eid}-{mark}.sorted.bam',
+        bai = 'hist/{eid}-{mark}.sorted.bam.bai',
+    output: 'hist/{eid}-{mark}.sorted.bedGraph'
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/bedtools_genomecov/{eid}-{mark}.tsv'
+    shell:
+        'bedtools genomecov -ibam '
+        '{input.bam} -bga | '
+        'bedtools sort -i stdin > {output}'
+
+rule bdg2npz:
+    input: 'hist/{eid}-{mark}.sorted.bedGraph'
+    output: 'hist/{eid}-{mark}.npz'
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/bdg2npz/{eid}-{mark}.tsv'
+    shell:
+        'python scripts/bdg2npz.py '
+        '-i {input} '
+        '-c {hg19_sizes} '
+        '-o {output}'
+        
+rule download_exp:
+    output: 'exp/raw_exp.tsv'
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/download_exp.tsv'
+    shell:
+        'wget https://egg2.wustl.edu/roadmap/data/byDataType/rna/expression/57epigenomes.RPKM.pc.gz -O- | '
+        'gunzip -c | '
+        'sed \'s/[ \\t]*$//\' > {output}'
+
+rule prepare_train_metadata:
+    input:
+        expand('annotations/{tissue}_frag2neighbors.pickle', tissue=tissues),
+        expand('annotations/{tissue}_pair2score.pickle', tissue=tissues),
+    output:
+        'train.csv'
+    conda:
+        'environment.yaml'
+    benchmark: 'benchmarks/prepare_train_metadata.tsv'
+    shell:
+        'python scripts/prepare_train_metadata.py'
+
+rule download_frag2neighbors_per_tissue:
+    output:
+        'annotations/{tissue}_frag2neighbors.pickle'
+    resources: network = 1
+    benchmark: 'benchmarks/download_frag2neighbors_per_tissue/{tissue}.tsv'
+    shell:
+        'wget '
+        'https://dohlee-bioinfo.sgp1.digitaloceanspaces.com/chromoformer-data/{wildcards.tissue}_frag2neighbors.pickle '
+        '-O- > {output}'
+
+rule download_pair2score_per_tissue:
+    output:
+        'annotations/{tissue}_pair2score.pickle'
+    resources: network = 1
+    benchmark: 'benchmarks/download_pair2score_per_tissue/{tissue}.tsv'
+    shell:
+        'wget '
+        'https://dohlee-bioinfo.sgp1.digitaloceanspaces.com/chromoformer-data/{wildcards.tissue}_pair2score.pickle '
+        '-O- > {output}'

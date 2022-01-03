@@ -1,0 +1,12 @@
+eid,description,tissue_group,tissue_type,tissue
+E003,H1 cells,ES cell,Human ES cells,H1
+E004,H1 BMP4 derived mesendoderm,ES-derived,Mesendoderm,ME
+E005,H1 BMP4 derived trophoblast,ES-derived,Trophoblast,TB
+E006,H1 derived mesenchymal stem cells,ES-derived,Mesenchymal Stem Cell,MSC
+E007,H1 derived neuronal progenitor cultured cells,ES-derived,Neural Progenitor Cell,NPC
+E016,HUES64 cells,ES cell,Human ES cells,H1
+E066,Liver,Other,Liver,LI11
+E087,Pancreatic islets,Other,Pancreas,PA
+E114,A549 EtOH 0.02pct lung carcinoma,ENCODE 2012,Lung,LG
+E116,GM12878 lymphoblastoid,ENCODE 2012,Lymphoblastoid cell lines,GM
+E118,HepG2 hepatocellular carcinoma,ENCODE 2012,Liver,LI11

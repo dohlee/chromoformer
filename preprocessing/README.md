@@ -1,8 +1,6 @@
 # Data preprocessing pipeline
 
-We provide the whole data preprocessing pipeline used in this study as a single snakemake pipeline.
-
-Running this pipeline will automatically 1) download all the relevant tagAlign files from Roadmap Epigenomics (for the 11 cell types analyzed in the study), 2) convert the tagAlign files into BAM files using `bedtools bedtobam`, 3) save the read depths throughout the hg19 reference genome as bedGraph files using `bedtools genomecov` and 4) convert the read depth signal to npz files. Using npz file makes it easy to extract histone read depth signals in the form of numpy array.
+We provide the whole data preprocessing pipeline used in this study as a single `snakemake` pipeline.
 
 ### Quickstart
 
@@ -29,8 +27,10 @@ The whole procedure for preprocessing is as below:
 1. Download histone ChIP-seq tagAlign files from Roadmap (`wget`)
 2. Convert tagAlign files into BAM files, and sort/index them (`bedtools bedtobam`, `sambamba sort/index`)
 3. Compute genomewide read depth using BAM files and save it as bedGraph files (`bedtools genomecov`)
-4. Convert bedGraph in to npz files for easy file handling (`bdg2npz.py`)
+4. Convert bedGraph in to npz files for easy file handling (`scripts/bdg2npz.py`)
+5. Prepare train metadata table. Each row of the table corresponds to a gene annotated with 0/1 label (i.e., lowly/highly expressed), TSS position, putative *cis*-regulatory elements interacting with that gene (`scripts/prepare_train_metadata.py`). Of note, the information about the pairwise interactions between genomic regions were obtained and processed from [3div](http://3div.kr/) database.
+6. Extract log2-transformed read depth signals of seven major histone marks for the relevant regions as npy files named as `data/{chrom}:{start}-{end}.npy`.
 
 ### Note
-You may need about ~400G of disk space to save all the raw histone signal data (tagAlign, bedGraph, and npz files).
+You may need about ~400G of disk space to save all the raw histone signal data (tagAlign, bedGraph, npz and npy files).
 
