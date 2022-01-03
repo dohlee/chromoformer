@@ -28,7 +28,7 @@ def get_neighbors(ensg, ensg2tss, tss2fragment, frag2neighbors, pair2score, min_
             neighbor_chrom, neighbor_start, neighbor_end = split_interval(neighbor_frag)
             score = pair2score[(tss_frag, neighbor_frag)]
 
-            if score > min_score and end - start <= w_max:
+            if score > min_score and neighbor_end - neighbor_start <= w_max:
                 neighbors.add((neighbor_frag, score))
 
     neighbors = list(sorted(list(neighbors), key=lambda x: -x[1]))[:k]
