@@ -12,7 +12,12 @@ def read_pickle(f):
 def tuple2interval(t):
     return f'{t[0]}:{t[1]}-{t[2]}'
 
-def get_neighbors(ensg, ensg2tss, tss2fragment, frag2neighbors, pair2score, min_score=1.5, k=8):
+def split_interval(iv):
+    chrom = iv.split(':')[0]
+    start, end = map(int, iv.split(':')[1].split('-'))
+    return chrom, start, end
+
+def get_neighbors(ensg, ensg2tss, tss2fragment, frag2neighbors, pair2score, min_score=1.5, k=8, w_max=40000):
     tss_fragments = set(tss2fragment[tuple2interval(tss)] for tss in ensg2tss[ensg])
 
     neighbors = set()
@@ -20,8 +25,10 @@ def get_neighbors(ensg, ensg2tss, tss2fragment, frag2neighbors, pair2score, min_
         neighbor_frags = frag2neighbors[tss_frag]
 
         for neighbor_frag in neighbor_frags:
+            neighbor_chrom, neighbor_start, neighbor_end = split_interval(neighbor_frag)
             score = pair2score[(tss_frag, neighbor_frag)]
-            if score > min_score:
+
+            if score > min_score and end - start <= w_max:
                 neighbors.add((neighbor_frag, score))
 
     neighbors = list(sorted(list(neighbors), key=lambda x: -x[1]))[:k]
