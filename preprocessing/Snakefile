@@ -35,6 +35,8 @@ coverage = expand('hist/{eid}-{mark}.sorted.bedGraph', eid=eids, mark=marks)
 npz = expand('hist/{eid}-{mark}.npz', eid=eids, mark=marks)
 raw_exp = 'exp/raw_exp.tsv'
 train_meta = 'train.csv'
+signals = expand('data/{eid}/.done', eid=eids)
+
 
 ALL = []
 ALL.append(tagalign)
@@ -42,6 +44,7 @@ ALL.append(coverage)
 ALL.append(npz)
 ALL.append(raw_exp)
 ALL.append(train_meta)
+ALL.append(signals)
 
 rule all:
     input: ALL
@@ -150,3 +153,15 @@ rule download_pair2score_per_tissue:
         'wget '
         'https://dohlee-bioinfo.sgp1.digitaloceanspaces.com/chromoformer-data/{wildcards.tissue}_pair2score.pickle '
         '-O- > {output}'
+
+rule extract_signals:
+    input:
+        'train.csv'
+    output:
+        touch('data/{eid}/.done')
+    benchmark: 'benchmarks/extract_signals/{eid}.tsv'
+    shell:
+        'python scripts/extract_signals.py '
+        '-i {input} '
+        '--eid {wildcards.eid} '
+        '-o data/{wildcards.eid}'

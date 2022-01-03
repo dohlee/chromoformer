@@ -3,6 +3,8 @@ __pycache__/
 
 exp/
 hist/
+data/
+benchmarks/
 
 .snakemake/
 *_frag2neighbors.pickle

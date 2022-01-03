@@ -40,6 +40,7 @@ if __name__ == '__main__':
     s = time.time()
     signal = defaultdict(dict)
     for mark in marks:
+        print(f'Reading {mark}.')
         npy = np.load(f'hist/{eid}-{mark}.npz')
 
         for chrom in chromosomes:
