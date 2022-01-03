@@ -41,12 +41,16 @@ rule all:
 rule download:
     output: temp('result/{eid}-{mark}.tagAlign')
     resources: network = 1
+    conda:
+        'environment.yaml'
     shell:
         'wget "https://egg2.wustl.edu/roadmap/data/byFileType/alignments/consolidated/{wildcards.eid}-{wildcards.mark}.tagAlign.gz" -O- | gunzip -c > {output}'
 
 rule bedtobam:
     input: 'result/{eid}-{mark}.tagAlign'
     output: temp('result/{eid}-{mark}.bam')
+    conda:
+        'environment.yaml'
     shell:
         'bedtools bedtobam -i {input} -g {hg19_sizes} > {output}'
 
@@ -54,6 +58,8 @@ rule sambamba_sort:
     input: 'result/{eid}-{mark}.bam'
     output: 'result/{eid}-{mark}.sorted.bam'
     threads: 4
+    conda:
+        'environment.yaml'
     shell:
         'sambamba sort -o {output} -t {threads} --tmpdir . {input}'
 
@@ -61,6 +67,8 @@ rule sambamba_index:
     input: 'result/{eid}-{mark}.sorted.bam'
     output: 'result/{eid}-{mark}.sorted.bam.bai'
     threads: 4
+    conda:
+        'environment.yaml'
     shell:
         'sambamba index -t {threads} {input}'
 
@@ -69,6 +77,8 @@ rule bedtools_genomecov:
         bam = 'result/{eid}-{mark}.sorted.bam',
         bai = 'result/{eid}-{mark}.sorted.bam.bai',
     output: 'result/{eid}-{mark}.sorted.bedGraph'
+    conda:
+        'environment.yaml'
     shell:
         'bedtools genomecov -ibam '
         '{input.bam} -bga | '
@@ -77,6 +87,8 @@ rule bedtools_genomecov:
 rule bdg2npz:
     input: 'result/{eid}-{mark}.sorted.bedGraph'
     output: 'result/{eid}-{mark}.npz'
+    conda:
+        'environment.yaml'
     shell:
         'python bdg2npz.py '
         '-i {input} '
