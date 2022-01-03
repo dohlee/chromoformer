@@ -71,7 +71,7 @@ class MultiHeadAttention(nn.Module):
         if mask is not None:
             minus_inf = -65504 if att_score.dtype == torch.float16 else -1e9
             att_score = att_score.masked_fill(mask, minus_inf).type_as(att_score)
-        att_prob = self.drop_att(F.softmax(att_score, dim=-1))
+        att_prob = F.softmax(att_score, dim=-1)
         # --> att_prob : bsz x n_heads x n_ints x n_ints
 
         att_vec = torch.matmul(att_prob, wv)
@@ -152,16 +152,16 @@ class PairwiseMultiHeadAttention(nn.Module):
 
         self.idx = idx
 
-    def forward(self, x_p, x_c, mask=None, bias=None):
-        ff_out = self.ff(self._attention(x_p, x_c, mask=mask, bias=bias))
+    def forward(self, x_p, x_pcre, mask=None, bias=None):
+        ff_out = self.ff(self._attention(x_p, x_pcre, mask=mask, bias=bias))
         return self.ln(x_p + self.drop_res(ff_out))
 
-    def _attention(self, x_p, x_c, mask, bias):
+    def _attention(self, x_p, x_pcre, mask, bias):
         # x : bsz x n_ints x d_model
         bsz, n_ints = x_p.size(0), x_p.size(1)
         # self.att(x) : bsz x n_ints x (4 * n_heads * d_head)
 
-        wk, wv = torch.chunk(self.c_att(x_c), 2, dim=-1) 
+        wk, wv = torch.chunk(self.c_att(x_pcre), 2, dim=-1) 
         wq = self.p_att(x_p)
 
         # --> wq, wk, wv : bsz x n_ints x (n_heads * d_head)
@@ -207,8 +207,8 @@ class PairwiseAttentionBlock(nn.Module):
         self.self_att = PairwiseMultiHeadAttention(d_emb, n_heads, d_model, idx, res_p, att_p, bias, scale, gate=gate)
         self.ff = FeedForward(d_emb, d_ff, activation=activation)
     
-    def forward(self, x_p, x_c, mask=None, bias=None):
-        return self.ff(self.self_att(x_p, x_c, mask, bias))
+    def forward(self, x_p, x_pcre, mask=None, bias=None):
+        return self.ff(self.self_att(x_p, x_pcre, mask, bias))
 
 
 class PairwiseTransformer(nn.Module):
@@ -219,7 +219,7 @@ class PairwiseTransformer(nn.Module):
             PairwiseAttentionBlock(d_emb, n_heads, d_model, d_ff, idx=i, res_p=res_p, att_p=att_p, activation=activation, gate=gate) for i in range(n_layers)
         ])
 
-    def forward(self, x_p, x_c, mask, bias=None):
+    def forward(self, x_p, x_pcre, mask, bias=None):
         for layer in self.layers:
-            x_p = layer(x_p, x_c, mask=mask, bias=bias)
+            x_p = layer(x_p, x_pcre, mask=mask, bias=bias)
         return x_p

@@ -84,7 +84,7 @@ class PairwiseInteractionTransformer(nn.Module):
         x_pcre = x_pcre.view(-1, max_n_bins, n_mark)
         # --> x: (bsz x (max_n_interactions + 1)) x max_n_bins x n_maxk
         x_p = self.lin_proj_p(x_p)
-        x_pcre = self.lin_proj_c(x_pcre)
+        x_pcre = self.lin_proj_pcre(x_pcre)
         # --> x: (bsz x (max_n_interactions + 1)) x max_n_bins x d_model
 
         # Embed and linearly project each genomic region independently.
@@ -102,7 +102,7 @@ class PairwiseInteractionTransformer(nn.Module):
         return x
 
 class RegulationTransformer(nn.Module):
-    def __init__(self, d_emb, n_layers, n_heads, d_model, d_ff, pos_enc=True, activation=F.relu):
+    def __init__(self, n_layers, n_heads, d_emb, d_model, d_ff, pos_enc=True, activation=F.relu):
         super(RegulationTransformer, self).__init__()
 
         self.transformer = Transformer(n_layers, n_heads, d_emb, d_model, d_ff, gate=True)
@@ -164,9 +164,9 @@ class Chromoformer(nn.Module):
         p_emb_500_total, p_emb_500 = self.embed500(x_p_500, pad_mask_p_500)
         p_emb_100_total, p_emb_100 = self.embed100(x_p_100, pad_mask_p_100)
 
-        pw_int_emb_2000 = self.embed2000_b(p_emb_2000_total, x_pcre_2000, pad_mask_pcre_2000)
-        pw_int_emb_500 = self.embed500_b(p_emb_500_total, x_pcre_500, pad_mask_pcre_500)
-        pw_int_emb_100 = self.embed100_b(p_emb_100_total, x_pcre_100, pad_mask_pcre_100)
+        pw_int_emb_2000 = self.pw_int2000(p_emb_2000_total, x_pcre_2000, pad_mask_pcre_2000)
+        pw_int_emb_500 = self.pw_int500(p_emb_500_total, x_pcre_500, pad_mask_pcre_500)
+        pw_int_emb_100 = self.pw_int100(p_emb_100_total, x_pcre_100, pad_mask_pcre_100)
 
         x_2000 = torch.cat([p_emb_2000, pw_int_emb_2000], axis=1)
         x_500 = torch.cat([p_emb_500, pw_int_emb_500], axis=1)
@@ -186,21 +186,29 @@ if __name__ == '__main__':
     import tqdm
     import pandas as pd
 
-    model = Chromoformer()
+    model = Chromoformer().cuda()
 
     # Dummy data.
     bsz = 8
     i_max = 8
-    
 
     x_p_2000, x_p_500, x_p_100 = torch.randn([bsz, 1, 20, 7]), torch.randn([bsz, 1, 80, 7]), torch.randn([bsz, 1, 400, 7])
     x_pcre_2000, x_pcre_500, x_pcre_100 = torch.randn([bsz, i_max, 20, 7]), torch.randn([bsz, i_max, 80, 7]), torch.randn([bsz, i_max, 400, 7])
 
-    pad_mask_p_2000, pad_mask_p_500, pad_mask_p_100 = torch.randn([bsz, 1, 1, 20, 20]), torch.randn([bsz, 1, 1, 80, 80]), torch.randn([bsz, 1, 1, 400, 400])
-    pad_mask_pcre_2000, pad_mask_pcre_500, pad_mask_pcre_100 = torch.randn([bsz, i_max, 1, 20, 20]), torch.randn([bsz, i_max, 1, 80, 80]), torch.randn([bsz, i_max, 1, 400, 400])
+    pad_mask_p_2000, pad_mask_p_500, pad_mask_p_100 = torch.randn([bsz, 1, 1, 20, 20]).bool(), torch.randn([bsz, 1, 1, 80, 80]).bool(), torch.randn([bsz, 1, 1, 400, 400]).bool()
+    pad_mask_pcre_2000, pad_mask_pcre_500, pad_mask_pcre_100 = torch.randn([bsz, i_max, 1, 20, 20]).bool(), torch.randn([bsz, i_max, 1, 80, 80]).bool(), torch.randn([bsz, i_max, 1, 400, 400]).bool()
 
-    interaction_mask_2000, interaction_mask_500, interaction_mask_100 = torch.randn([bsz, 1, 1 + i_max, 1 + i_max]), torch.randn([bsz, 1, 1 + i_max, 1 + i_max]), torch.randn([bsz, 1, 1 + i_max, 1 + i_max])
+    interaction_mask_2000, interaction_mask_500, interaction_mask_100 = torch.randn([bsz, 1, 1 + i_max, 1 + i_max]).bool(), torch.randn([bsz, 1, 1 + i_max, 1 + i_max]).bool(), torch.randn([bsz, 1, 1 + i_max, 1 + i_max]).bool()
     interaction_freq = torch.randn([bsz, 1 + i_max, 1 + i_max])
+
+    x_p_2000, x_p_500, x_p_100 = x_p_2000.cuda(), x_p_500.cuda(), x_p_100.cuda()
+    x_pcre_2000, x_pcre_500, x_pcre_100 = x_pcre_2000.cuda(), x_pcre_500.cuda(), x_pcre_100.cuda()
+
+    pad_mask_p_2000, pad_mask_p_500, pad_mask_p_100 = pad_mask_p_2000.cuda(), pad_mask_p_500.cuda(), pad_mask_p_100.cuda() 
+    pad_mask_pcre_2000, pad_mask_pcre_500, pad_mask_pcre_100 = pad_mask_pcre_2000.cuda(), pad_mask_pcre_500.cuda(), pad_mask_pcre_100.cuda() 
+
+    interaction_mask_2000, interaction_mask_500, interaction_mask_100 = interaction_mask_2000.cuda(), interaction_mask_500.cuda(), interaction_mask_100.cuda()
+    interaction_freq = interaction_freq.cuda()
 
     out = model(
         x_p_2000, pad_mask_p_2000, x_pcre_2000, pad_mask_pcre_2000, interaction_mask_2000,
@@ -208,14 +216,3 @@ if __name__ == '__main__':
         x_p_100, pad_mask_p_100, x_pcre_100, pad_mask_pcre_100, interaction_mask_100,
         interaction_freq,
     )
-
-    # train_meta = '/data/project/dohoon/chromoformer/data/train_data_v1/train.csv'
-    # meta = pd.read_csv(train_meta)
-    # target_genes = meta.sample(10000)['target_gene'].unique()
-
-    # dataset = data.Roadmap3D(target_genes, eid='E003', tissue='Mesenchymal Stem Cell')
-    # loader = torch.utils.data.DataLoader(dataset, batch_size=8, num_workers=8)
-
-    # model = Chromoformer(n_feats=5, n_layers=2, n_heads=4, d_model=128, d_ff=256)
-    # for i, d in tqdm.tqdm(enumerate(loader), total=len(loader)):
-    #     print(model(d['x'], d['pad_mask'], d['interaction_mask']).shape)
