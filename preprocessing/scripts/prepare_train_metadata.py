@@ -3,6 +3,7 @@ import pandas as pd
 import pickle
 import time
 
+from queue import PriorityQueue
 from collections import defaultdict
 
 def read_pickle(f):
@@ -20,26 +21,30 @@ def split_interval(iv):
 def get_neighbors(ensg, ensg2tss, tss2fragment, frag2neighbors, pair2score, min_score=1.5, k=8, w_max=40000):
     tss_fragments = [tss2fragment[tuple2interval(tss)] for tss in ensg2tss[ensg]]
 
-    visited_neighbors, neighbors = set(), set()
+    neighbor_pool = PriorityQueue()
+    n_partners = 0
+
+    visited_neighbor = set()
+
     for tss_frag in tss_fragments:
-        neighbor_frags = frag2neighbors[tss_frag]
+        _neighbor_pool = [(pair2score[(tss_frag, neighbor)], neighbor) for neighbor in frag2neighbors[tss_frag]]
+        for score, neighbor in _neighbor_pool:
+            if neighbor not in visited_neighbor and score > 1.5:
+                _c, _s, _e = split_interval(neighbor)
 
-        for neighbor_frag in neighbor_frags:
-            if neighbor_frag in visited_neighbors:
-                continue
+                if _e - _s > w_max:
+                    continue
 
-            neighbor_chrom, neighbor_start, neighbor_end = split_interval(neighbor_frag)
-            score = pair2score[(tss_frag, neighbor_frag)]
+                neighbor_pool.put((-score, neighbor))
+                visited_neighbor.add(neighbor)
+                n_partners += 1
 
-            # if ensg == 'ENSG00000003402':
-                # print(tss_frag, neighbor_frag, score, neighbor_end - neighbor_start)
+    n_partners = min(n_partners, k)
 
-            if score > min_score and neighbor_end - neighbor_start <= w_max:
-                neighbors.add((neighbor_frag, score))
-                visited_neighbors.add(neighbor_frag)
+    neighbor_pool = [neighbor_pool.get() for _ in range(n_partners)]
+    neighbor_pool = [(x[1], -x[0]) for x in neighbor_pool]
 
-    neighbors = list(sorted(list(neighbors), key=lambda x: -x[1]))[:k]
-    return neighbors
+    return neighbor_pool
 
 chromosome_splits = {
     1: ['chr1', 'chr6', 'chr5', 'chr8', 'chr14', 'chrY'],
