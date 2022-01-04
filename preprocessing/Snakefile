@@ -25,7 +25,7 @@ marks = [
 tissue_mapping = pd.read_csv('annotations/tissue_mapping.csv')
 eid2tissue = {r.eid:r.tissue for r in tissue_mapping.to_records()}
 
-eids = ['E003']
+eids = ['E114']
 # marks = ['H3K4me1']
 tissues = [eid2tissue[eid] for eid in eids]
 
@@ -156,12 +156,13 @@ rule download_pair2score_per_tissue:
 
 rule extract_signals:
     input:
-        'train.csv'
+        train = 'train.csv',
+        read_depths = expand('hist/{{eid}}-{mark}.npz', mark=marks),
     output:
         touch('data/{eid}/.done')
     benchmark: 'benchmarks/extract_signals/{eid}.tsv'
     shell:
         'python scripts/extract_signals.py '
-        '-i {input} '
+        '-i {input.train} '
         '--eid {wildcards.eid} '
         '-o data/{wildcards.eid}'

@@ -6,6 +6,7 @@ channels:
 dependencies:
     - sambamba
     - python=3.7
+    - bedtools
     - pandas
     - numpy
     - tqdm

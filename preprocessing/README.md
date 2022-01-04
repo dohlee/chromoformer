@@ -4,13 +4,15 @@ We provide the whole data preprocessing pipeline used in this study as a single 
 
 ### Quickstart
 
-Install [conda](https://docs.conda.io/en/latest/) package manager and [snakemake](https://snakemake.readthedocs.io/en/stable/) workflow managing system, and run the pipeline using the command below:
+Before running the preprocessing pipeline, you should install [conda](https://docs.conda.io/en/latest/) package manager and [snakemake](https://snakemake.readthedocs.io/en/stable/) workflow managing system. In short, the execution order of snakemake pipeline will be determined by the input-output dependencies specified in the snakemake rule files (Snakefile or `.smk` files in general), as in [GNU Make](https://www.gnu.org/software/make/manual/make.html). Here we eventually need processed histone ChIP-seq read depth files to train Chromoformer, so the whole preprocessing pipeline, properly configured with dependencies, will automatically do all the necessary jobs for you.
+
+When you are ready with the prerequisites above, run the pipeline using the command below:
 
 ```
-snakemake --resources network=1 -j32 --use-conda --conda-frontend mamba -pr
+snakemake --resources network=1 -j 32 --restart-times 3 --use-conda --conda-frontend mamba -pr
 ```
 
-Adjust the number of `network` resource according to your network bandwidth and I/O capacity (e.g., increasing it to 2 will allow at most two concurrent downloads). You can also adjust the number of processors to use with the parameter `-j`. Note that `--use-conda` option will automatically install the required tools and python packages for you. We highly recommend to install `mamba`, which remarkably reduces the time to create environment compared to `conda`. If you do not have `mamba` installed in your system, install it in the base environment with:
+Adjust the number of `network` resource according to your network bandwidth and I/O capacity (e.g., increasing it to 2 will allow at most two concurrent downloads). You can also adjust the number of processors to use with the parameter `-j`. To handle unexpected network issue when downloading data, adjust `--restart-times` option (3 will be sufficient in most cases). Note that `--use-conda` option will automatically install the required tools and python packages for you. We highly recommend to install `mamba`, which remarkably reduces the time to create environment compared to `conda`. If you do not have `mamba` installed in your system, install it in the base environment with:
 
 ```
 conda install mamba -n base -c conda-forge
@@ -30,6 +32,10 @@ The whole procedure for preprocessing is as below:
 4. Convert bedGraph in to npz files for easy file handling (`scripts/bdg2npz.py`)
 5. Prepare train metadata table. Each row of the table corresponds to a gene annotated with 0/1 label (i.e., lowly/highly expressed), TSS position, putative *cis*-regulatory elements interacting with that gene (`scripts/prepare_train_metadata.py`). Of note, the information about the pairwise interactions between genomic regions were obtained and processed from [3div](http://3div.kr/) database.
 6. Extract log2-transformed read depth signals of seven major histone marks for the relevant regions as npy files named as `data/{chrom}:{start}-{end}.npy`.
+
+### Dependency graph
+
+
 
 ### Note
 You may need about ~400G of disk space to save all the raw histone signal data (tagAlign, bedGraph, npz and npy files).
