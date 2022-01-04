@@ -1,0 +1,62 @@
+exp_id = 'chromoformer-reproduction'
+confs = ['1']
+
+eids = [
+    'E003',
+    'E004',
+    'E005',
+    'E006',
+    'E007',
+    'E016',
+    'E066',
+    'E087',
+    'E114',
+    'E116',
+    'E118',
+]
+folds = [1, 2, 3, 4]
+
+# Temporary override.
+eids = ['E003']
+
+ALL = []
+ALL.append(
+    expand(
+        'ckpts/{eid}/{exp_id}-{eid}-conf{conf}-fold{fold}.pt',
+        eid=eids, exp_id=[exp_id], conf=confs, fold=folds,
+    )
+)
+
+rule all:
+    input: ALL
+
+rule train:
+    output:
+        '_ckpts/{eid}/{exp_id}-{eid}-conf{conf}-fold{fold}.pt'
+    params: gpu = 0
+    shell:
+        'CUDA_VISIBLE_DEVICES={params.gpu} '
+        'python train.py '
+        '--output {output} '
+        '--exp-id {wildcards.exp_id} '
+        '--config configs/{wildcards.conf}.yaml '
+        '--fold {wildcards.fold} ' 
+        '--eid {wildcards.eid} '
+        '--debug'
+
+
+use rule train as train_0 with:
+    output:
+        'ckpts/{eid,E016|E066|E087|E114|E116|E118}/{exp_id}-{eid}-conf{conf}-fold{fold,[1234]}.pt'
+    params:
+        gpu = 0
+    resources:
+        gpu0 = 1
+
+use rule train as train_1 with:
+    output:
+        'ckpts/{eid,E003|E004|E005|E006|E007}/{exp_id}-{eid}-conf{conf}-fold{fold,[1234]}.pt'
+    params:
+        gpu = 1
+    resources:
+        gpu1 = 1

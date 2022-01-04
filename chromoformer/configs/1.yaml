@@ -1,0 +1,34 @@
+exp_id: 'chromoformer-reproduction'
+
+seed: 123
+
+# Optimization.
+num_epoch: 10
+lr: 3e-5
+bsz: 64
+gamma: 0.87
+
+# Data processing.
+i_max: 8
+w_prom: 40000
+w_max: 40000
+
+# Model specification.
+n_feats: 7
+
+embed_n_layers: 1
+embed_n_heads: 2
+embed_d_model: 128
+embed_d_ff: 128
+
+pw_int_n_layers: 2
+pw_int_n_heads: 2
+pw_int_d_model: 128
+pw_int_d_ff: 256
+
+reg_n_layers: 6
+reg_n_heads: 8
+reg_d_model: 256
+reg_d_ff: 256
+
+head_n_feats: 128

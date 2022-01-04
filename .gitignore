@@ -4,7 +4,10 @@ __pycache__/
 exp/
 hist/
 data/
+data
 benchmarks/
+ckpts/
+wandb/
 
 .snakemake/
 *_frag2neighbors.pickle
