@@ -20,16 +20,20 @@ def split_interval(iv):
 def get_neighbors(ensg, ensg2tss, tss2fragment, frag2neighbors, pair2score, min_score=1.5, k=8, w_max=40000):
     tss_fragments = set(tss2fragment[tuple2interval(tss)] for tss in ensg2tss[ensg])
 
-    neighbors = set()
+    visited_neighbors, neighbors = set(), set()
     for tss_frag in tss_fragments:
         neighbor_frags = frag2neighbors[tss_frag]
 
         for neighbor_frag in neighbor_frags:
+            if neighbor_frag in visited_neighbors:
+                continue
+
             neighbor_chrom, neighbor_start, neighbor_end = split_interval(neighbor_frag)
             score = pair2score[(tss_frag, neighbor_frag)]
 
             if score > min_score and neighbor_end - neighbor_start <= w_max:
                 neighbors.add((neighbor_frag, score))
+                visited_neighbors.add(neighbor_frag)
 
     neighbors = list(sorted(list(neighbors), key=lambda x: -x[1]))[:k]
     return neighbors
