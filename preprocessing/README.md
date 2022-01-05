@@ -35,6 +35,8 @@ The whole procedure for preprocessing can be described as below:
 5. Prepare train metadata table. Each row of the table corresponds to a gene annotated with 0/1 label (i.e., lowly/highly expressed), TSS position, putative *cis*-regulatory elements interacting with that gene (`scripts/prepare_train_metadata.py`). Of note, the information about the pairwise interactions between genomic regions were obtained and processed from [3div](http://3div.kr/) database.
 6. Extract log2-transformed read depth signals of seven major histone marks for the relevant regions as npy files named as `data/{chrom}:{start}-{end}.npy`.
 
+This pipeline will generate three directories: `hist`, `data` and `exp`. `hist` directory contains raw ChIP-seq alignment in tagAlign or BAM files as well as genomewide depth files in bedGraph or npz files. `data` directory contains processed read depth signals for a bunch of genomic fragments that will be used for Chromoformer training. `exp` directory contains raw and processed gene expression tables.
+
 ### Note
 You may need about ~400G of disk space to save all the raw histone signal data (tagAlign, bedGraph, npz and npy files).
 

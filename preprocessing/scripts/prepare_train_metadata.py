@@ -61,7 +61,6 @@ ensg2tss = read_pickle('annotations/ensg2tss.pickle')
 tss2fragment = read_pickle('annotations/tss2fragment.pickle')
 
 target_eids = tissue_mapping.eid.values
-target_eids = ['E003']
 target_ensgs = set(raw_exp.index.values) & set(refgene.ensg.values)
 
 print(f'[prepare_train_metadata] There are {len(target_eids)} target EIDs and {len(target_ensgs)} target genes.')
