@@ -25,7 +25,7 @@ marks = [
 tissue_mapping = pd.read_csv('annotations/tissue_mapping.csv')
 eid2tissue = {r.eid:r.tissue for r in tissue_mapping.to_records()}
 
-eids = ['E114']
+# eids = ['E114']
 tissues = [eid2tissue[eid] for eid in eids]
 
 # Register target files. 
