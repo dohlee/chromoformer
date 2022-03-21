@@ -32,8 +32,8 @@ class MultiHeadAttention(nn.Module):
     def _attention(self, x, mask, bias):
         # x : bsz x n_ints x d_model
         bsz, n_ints = x.size(0), x.size(1)
-        # self.att(x) : bsz x n_ints x (4 * n_heads * d_head)
 
+        # self.att(x) : bsz x n_ints x (4 * n_heads * d_head)
         if self.gate:
             wq, wk, wv, gat = torch.chunk(self.att(x), 4, dim=-1) 
             # --> wq, wk, wv : bsz x n_ints x (n_heads * d_head)
@@ -135,14 +135,9 @@ class PairwiseMultiHeadAttention(nn.Module):
         self.gamma_f = nn.Parameter(torch.ones([n_heads]))
         self.gate = gate
 
-        # Promoter -> K, V
-        # self.p_att = nn.Linear(d_emb, 2 * n_heads * d_head, bias=False)
-        # CRE -> Q
-        # self.c_att = nn.Linear(d_emb, n_heads * d_head, bias=False)
-
         # Promoter -> Q
         self.p_att = nn.Linear(d_emb, n_heads * d_head, bias=False)
-        # CRE -> K, V
+        # pCRE -> K, V
         self.c_att = nn.Linear(d_emb, 2 * n_heads * d_head, bias=False)
 
         self.ff = nn.Linear(n_heads * d_head, d_emb, bias=bias)
@@ -161,9 +156,9 @@ class PairwiseMultiHeadAttention(nn.Module):
         bsz, n_ints = x_p.size(0), x_p.size(1)
         # self.att(x) : bsz x n_ints x (4 * n_heads * d_head)
 
-        wk, wv = torch.chunk(self.c_att(x_pcre), 2, dim=-1) 
         wq = self.p_att(x_p)
-
+        wk, wv = torch.chunk(self.c_att(x_pcre), 2, dim=-1) 
+        
         # --> wq, wk, wv : bsz x n_ints x (n_heads * d_head)
         wq, wk, wv = map(lambda x: x.view(bsz, n_ints, self.n_heads, self.d_head), (wq, wk, wv))
         # --> wq, wk, wv : bsz x n_ints x n_heads x d_head

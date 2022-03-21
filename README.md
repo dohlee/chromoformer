@@ -1,7 +1,5 @@
 # Chromoformer
 
-***NOTE:*** **This repository is still in development, but you can already find the model implementation at `chromoformer` directory. We will finish our code cleanup and update the model training pipeline soon!**
-
 This repository provides the official code implementations for Chromoformer.
 
 We also provide our pipelines for preprocessing input data and training Chromoformer model to help researchers reproduce the results and extend the study with their own data.
