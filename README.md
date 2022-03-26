@@ -39,6 +39,8 @@ To check whether Chromoformer works properly, please refer the README file in [`
 
 ## Pretrained weights
 
+![pretrained_weights_doi](https://img.shields.io/badge/doi-10.6084%2Fm9.figshare.19424807.v1-blue)
+
 Pretrained weights for Chromoformer models are available at https://doi.org/10.6084/m9.figshare.19424807.v1.
 Models were individually trained for 11 cell types from Roadmap Epigenomics Project. For each cell type, 18955 protein coding genes were divided into four non-overlapping cross-validation (CV) sets, and trained weights for each cross-validation fold is provided in this dataset.
 

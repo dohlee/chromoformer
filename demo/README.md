@@ -76,9 +76,10 @@ The file will be exactly same as the original metadata file (`demo_meta.csv`), e
 
 ## (For testing purpose only) Comparison with the prediction of untrained Chromoformer
 
-One may be curious whether the results above truly implies that 
+One may be curious whether the results above truly implies that the model learned well.
+This can be simply examined by comparing the performance with untrained/fresh model.
 
-You can run the prediction with a newly-initialized (i.e., untrained) Chromoformer model and compare the results.
+You can run the prediction using a newly-initialized (i.e., untrained) Chromoformer model and compare the results.
 
 ```shell
 python run_demo.py \
@@ -87,4 +88,8 @@ python run_demo.py \
     -e E003
 ```
 
+### Expected result
+
 ![expected_result_random](img/demo_result_random.png)
+
+As you can see, the untrained Chromoformer produces worse results compared to the trained one.
