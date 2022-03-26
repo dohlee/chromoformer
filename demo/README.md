@@ -44,7 +44,7 @@ To generate those region-wise histone modification levels formatted in `.npy` fi
 
 ## Run the prediction
 
-Before running the prediction, please do not forget to activate `chromoformer` conda environment. If you did not prepare `chromoformer` conda environment, please refer [here](https://github.com/dohlee/chromoformer#installation).
+Before running the prediction, please do not forget to activate `chromoformer` conda environment. If you did not prepare `chromoformer` conda environment, please refer [here](https://github.com/dohlee/chromoformer#installation). Also, make sure that the current directory is `demo`.
 
 You can now run the gene expression prediction for the 100 genes simply by the script `run_demo.py`.
 In the commandline (with the `chromoformer` environment enabled), run the following command, and it will finish shortly (~10s):
