@@ -3,7 +3,7 @@
 In this demo, we provide a minimal example illustrating how one can use pretrained Chromoformer to predict the expression of user-specified genes using the histone modification context at the promoter and three-dimensionally associated regions.
 
 In particular, we let the model conduct out-of-fold prediction and see whether it performs reasonably well.
-To simplify the process, we randomly subsampled 100 genes from validation set and specified their information in `metadata.csv` (i.e., genes that did not participate in the model training).
+To simplify the process, we randomly subsampled 100 genes from validation set and specified their information in `demo_meta.csv` (i.e., genes that did not participate in the model training).
 
 ## Data preparation
 
