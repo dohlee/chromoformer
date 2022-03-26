@@ -23,7 +23,7 @@ There are three transformer-based submodules: Embedding, Pairwise Interaction an
 
 First, clone this repository and move to the directory.
 ```
-git clone git@github.com:dohlee/chromoformer.git && mv chromoformer
+git clone git@github.com:dohlee/chromoformer.git && cd chromoformer
 ```
 
 To install the appropriate environment for Chromoformer, you should install [conda](https://docs.conda.io/en/latest/) package manager.
