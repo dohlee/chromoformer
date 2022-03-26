@@ -19,6 +19,55 @@ There are three transformer-based submodules: Embedding, Pairwise Interaction an
 
 ![model2](img/model2.png)
 
+## Installation
+
+First, clone this repository.
+```
+git clone git@github.com:dohlee/chromoformer.git
+```
+
+To install the appropriate environment for Chromoformer, you should install [conda](https://docs.conda.io/en/latest/) package manager.
+
+After installing `conda` and placing the `conda` executable in The following command will create `conda` environment named `chromoformer`. It will finish in 30 minutes to setup the environment, but may vary upon the Internet connection and package cache states.
+```
+conda env create -f environment.yaml
+```
+
+To check whether Chromoformer works properly, please refer the README file in `demo` directory and follow the instructions.
+
+## System Requirements
+
+### Hardware requirements
+
+Chromoformer was trained using a server with 40 Intel(R) Xeon(R) Silver 4210R @ 2.40GHz CPUs, 128GB RAM and two GeForce RTX 3090 GPUs. Internally, the training procedure utilizes 8 cores (workers) and memory (RAM) footprint was <8GB throughout the training loop. GPU memory usage was ~10GB.
+
+According to the statistics above, we provide the optimal hardware requirements as follows:
+
+- **CPU requirement**: 8+ cores, 2.40+ GHz per core
+- **GPU requirement**: 16+ GB GPU
+
+### Software requirements
+
+**Operating system**
+
+Chromoformer training and evaluation were tested for *Linux* (Ubuntu 18.04) operating systems.
+
+**Software package versions**
+
+Chromoformer training and evaluation were tested for the following software packages and versions.
+
+- **Python packages**
+  - `python`=3.9.6
+  - `pytorch`=1.9.0 (installed using cuda version 11.1)
+  - `numpy`=1.21.0
+  - `pandas`=1.3.0
+  - `scikit-learn`=0.24.2
+  - `tqdm`=4.61.2
+  - `snakemake`=6.5.3
+- **Commandline tools (required for training data preprocessing)**
+  - `sambamba`=0.6.8
+  - `bedtools`=2.23.0
+
 ## Citation
 
 Lee, D., Yang, J., & Kim, S. (2021). Learning the histone codes of gene regulation with large genomic windows and three-dimensional chromatin interactions using transformer. bioRxiv.
