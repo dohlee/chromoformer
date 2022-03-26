@@ -12,24 +12,20 @@ from pathlib import Path
 from collections import Counter, defaultdict
 from queue import PriorityQueue
 
-train_dir = Path('../preprocessing')
-train_meta = train_dir / 'train.csv'
-
 def load_pickle(f):
     with open(f, 'rb') as inFile:
         return pickle.load(inFile)
 
 class Roadmap3D(Dataset):
     
-    def __init__(self, eid, target_genes, i_max=8, w_prom=40000, w_max=40000):
+    def __init__(self, meta, eid, target_genes, i_max=8, w_prom=40000, w_max=40000):
         super(Roadmap3D, self).__init__()
 
         self.eid = eid
-        # self.tissue = eid2mnenonics[eid]
 
         self.target_genes = target_genes # List of ENSGs.
 
-        meta = pd.read_csv(train_meta)
+        meta = pd.read_csv(meta)
         self.meta = meta[meta.eid == self.eid].reset_index(drop=True)
         self.ensg2label = {r.gene_id:r.label for r in self.meta.to_records()}
         
@@ -75,14 +71,10 @@ class Roadmap3D(Dataset):
         ], dim=1)
 
         return x_binned, left_pad, n_bins, right_pad
-
-        # mask = torch.ones([1, max_n_bins, max_n_bins], dtype=torch.bool)
-        # mask[0, left_pad:left_pad + n_bins, left_pad:left_pad + n_bins] = 0
-        # mask : 1 x max_n_bins x max_n_bins
-        # return x_binned, mask
     
     def _get_region_representation(self, chrom, start, end, bin_size, max_n_bins, strand='+', window=None):
-        x = torch.tensor(np.load(train_dir / f'data/{self.eid}/{chrom}:{start}-{end}.npy')).float()
+        x = torch.tensor(np.load(f'demo_data/{self.eid}/{chrom}:{start}-{end}.npy')).float()
+
         if window is not None:
             x = x[:, 20000 - window // 2:20000 + window // 2]
         x, left_pad, n_bins, right_pad = self._bin_and_pad(x, bin_size, max_n_bins)
@@ -166,26 +158,3 @@ class Roadmap3D(Dataset):
 
     def __len__(self):
         return len(self.target_genes)
-
-if __name__ == '__main__':
-    import tqdm
-
-    meta = pd.read_csv(train_meta)
-    dataset = Roadmap3D('E003', meta.gene_id.unique())
-    loader = DataLoader(dataset, batch_size=8, num_workers=1, shuffle=False)
-
-    for i, d in tqdm.tqdm(enumerate(loader), total=len(loader)):
-        # print(i, d['x'].shape, d['pad_mask'].shape, d['interaction_mask'].shape)
-        # print(d.keys())
-        # print(d['x_100'].shape, d['interaction_mask_100'].shape)
-        # print(d['pad_mask_2000'][:, [0]].shape)
-        # print(d['pad_mask_2000'][:, 1:].shape)
-        
-        # print(d['pad_mask_p_2000'].shape)
-        # print(d['pad_mask_pcre_2000'].shape)
-
-        # print(d['x_p_2000'].shape)
-        # print(d['x_pcre_2000'].shape)
-        for k, v in d.items():
-            print(k, v.shape)
-        break
