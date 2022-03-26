@@ -28,7 +28,7 @@ git clone https://github.com/dohlee/chromoformer.git && cd chromoformer
 
 To install the appropriate environment for Chromoformer, you should install [conda](https://docs.conda.io/en/latest/) package manager.
 
-After installing `conda` and placing the `conda` executable in The following command will create `conda` environment named `chromoformer` installed with a GPU-compatible version of `pytorch`. It will take up to 30 minutes to setup the environment, but may vary upon the Internet connection and package cache states.
+After installing `conda` and placing the `conda` executable in `PATH`, the following command will create `conda` environment named `chromoformer` installed with a GPU-compatible version of `pytorch`. It will take up to 30 minutes to setup the environment, but may vary upon the Internet connection and package cache states.
 ```
 conda env create -f environment.yaml && \
 conda activate chromoformer && \
