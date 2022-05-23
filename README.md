@@ -107,6 +107,7 @@ We highly recommend going through those works thoroughly to understand the conce
 - `AttentiveChrome`: https://github.com/QData/AttentiveChrome
 - `HM-CRNN`: https://github.com/pptnz/deeply-learning-regulatory-latent-space
 - `GC-MERGE`: https://github.com/rsinghlab/GC-MERGE
+- `DeepDiff`: https://github.com/QData/DeepDiffChrome
 
 ## Citation
 
