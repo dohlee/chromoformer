@@ -59,3 +59,53 @@ It controls the maximum number of concurrent downloads.
 ```shell
 snakemake -s ENCODE_download_helper.smk -pr --resources network=1 -j [NUM_CORES]
 ```
+
+## Helper scripts
+
+**prepare_ensg2tss.py**
+
+```
+python scripts/prepare_ensg2tss.py \
+--input result/04_metadata/gencode.vM1.annotation.gtf \
+--output result/04_metadata/ensg2tss.pickle
+```
+
+**prepare_tss2fragment_hic.py**
+
+```
+python scripts/prepare_tss2fragment_hic.py \
+--ensg2tss result/04_metadata/ensg2tss.pickle \
+--fragment-size 40000 \
+--output result/04_metadata/tss2fragment.pickle \
+```
+
+**prepare_frag2neighbors_and_pair2score.py**
+```
+python scripts/prepare_frag2neighbors_and_pair2score.py \
+--freq-matrices result/05_interaction_freqs/nij.chr1 result/05_interaction_freqs/nij.chr2 result/05_interaction_freqs/nij.chr3 result/05_interaction_freqs/nij.chr4 \
+result/05_interaction_freqs/nij.chr5 result/05_interaction_freqs/nij.chr6 result/05_interaction_freqs/nij.chr7 result/05_interaction_freqs/nij.chr8 \
+result/05_interaction_freqs/nij.chr9 result/05_interaction_freqs/nij.chr10 result/05_interaction_freqs/nij.chr11 result/05_interaction_freqs/nij.chr12 \
+result/05_interaction_freqs/nij.chr13 result/05_interaction_freqs/nij.chr14 result/05_interaction_freqs/nij.chr15 result/05_interaction_freqs/nij.chr16 \
+result/05_interaction_freqs/nij.chr17 result/05_interaction_freqs/nij.chr18 result/05_interaction_freqs/nij.chr19 \
+--chromosomes chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 \
+--tss2fragment result/04_metadata/tss2fragment.pickle \
+--fragment-size 40000 \
+--freq-threshold 10 \
+--output-frag2neighbors result/04_metadata/frag2neighbors.pickle \
+--output-pair2score result/04_metadata/pair2score.pickle
+```
+
+**prepare_npy_files.py**
+
+```
+python scripts/prepare_npy_files.py \
+--ensg2tss result/04_metadata/ensg2tss.pickle \
+--tss2fragment result/04_metadata/tss2fragment.pickle \
+--frag2neighbors result/04_metadata/frag2neighbors.pickle \
+--pair2score result/04_metadata/pair2score.pickle \
+--npz-dir result/03_npz \
+--out-dir result/05_npy \
+--freq-threshold 10.0 \
+-m H3K4me1 H3K4me3 H3K9me3 H3K27me3 H3K36me3 H3K27ac H3K9ac \
+-c chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19
+```

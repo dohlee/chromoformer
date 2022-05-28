@@ -1,0 +1,16 @@
+manifest: 'manifest.fastq.csv'
+data_dir: 'data'
+
+reference:
+    name: 'mm9'
+    bwa_index_prefix: '/data/project/dohoon/reference/mm9/bwa_index/mm9'
+    fasta: '/data/project/dohoon/reference/mm9/mm9.fa'
+    sizes: '/data/project/dohoon/reference/mm9/mm9.fa.sizes'
+
+threads:
+    trim_galore: 4
+    bwa_index: 8
+    bwa_mem: 12
+    sambamba_sort: 6
+    sambamba_index: 6
+    sambamba_merge: 4

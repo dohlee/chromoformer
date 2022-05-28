@@ -5,6 +5,7 @@ exp/
 hist/
 data/
 data
+logs/
 benchmarks/
 ckpts/
 wandb/
