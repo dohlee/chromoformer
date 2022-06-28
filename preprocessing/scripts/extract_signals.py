@@ -25,11 +25,11 @@ if __name__ == '__main__':
 
     train = pd.read_csv(args.input)
     train = train[train.eid == eid].reset_index(drop=True)
-    
+
     region_set = set()
     for r in train.to_records():
         # Add TSS to region set.
-        region_set.add(f'{r.chrom}:{r.start}-{r.end}')
+        region_set.add(f'{r.chrom}:{r.start - 20000}-{r.start + 20000}')
 
         # Add neighbors to region set.
         if not pd.isnull(r.neighbors):
