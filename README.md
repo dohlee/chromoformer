@@ -1,5 +1,7 @@
 # Chromoformer
 
+[![DOI](https://zenodo.org/badge/432363545.svg)](https://zenodo.org/badge/latestdoi/432363545)
+
 This repository provides the official code implementations for Chromoformer.
 
 We also provide our pipelines for preprocessing input data and training Chromoformer model to help researchers reproduce the results and extend the study with their own data.
