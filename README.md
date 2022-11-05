@@ -113,14 +113,15 @@ We highly recommend going through those works thoroughly to understand the conce
 
 ## Citation
 
-Lee, D., Yang, J., & Kim, S. (2021). Learning the histone codes of gene regulation with large genomic windows and three-dimensional chromatin interactions using transformer. bioRxiv.
+Lee, D., Yang, J., & Kim, S. Learning the histone codes with large genomic windows and three-dimensional chromatin interactions using transformer. Nature Communications (2022)
 
 ```
-@article{lee2021learning,
-  title={Learning the histone codes of gene regulation with large genomic windows and three-dimensional chromatin interactions using transformer},
+@article{lee2022chromoformer,
   author={Lee, Dohoon and Yang, Jeewon and Kim, Sun},
-  journal={bioRxiv},
-  year={2021},
-  publisher={Cold Spring Harbor Laboratory}
+  title={Learning the histone codes with large genomic windows and three-dimensional chromatin interactions using transformer},
+  journal={Nature Communications},
+  doi={10.1038/s41467-022-34152-5},
+  year={2022},
+  publisher={Nature Publishing Group}
 }
 ```
