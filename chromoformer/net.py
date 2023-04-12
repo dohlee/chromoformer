@@ -116,8 +116,10 @@ class Chromoformer(nn.Module):
         n_feats=7, embed_n_layers=1, embed_n_heads=2, embed_d_model=128, embed_d_ff=128,
         pw_int_n_layers=2, pw_int_n_heads=2, pw_int_d_model=128, pw_int_d_ff=256,
         reg_n_layers=6, reg_n_heads=8, reg_d_model=256, reg_d_ff=256, head_n_feats=128,
+        seed=42,
     ):
         super(Chromoformer, self).__init__()
+        torch.manual_seed(seed)
         self.embed2000 = EmbeddingTransformer(
             n_feats, embed_n_layers, embed_n_heads, embed_d_model, embed_d_ff
         )
@@ -181,12 +183,116 @@ class Chromoformer(nn.Module):
         x = torch.cat([x_2000[:, 0], x_500[:, 0], x_100[:, 0]], axis=1) + emb # Take representation of the target promoter.
         return self.fc_head(x)
 
+class ChromoformerBase(nn.Module):
+    def __init__(
+        self, 
+        n_feats=7, d_emb=128, d_head=128,
+        embed_kws={
+            'n_layers': 1, 'n_heads': 2, 'd_model': 128, 'd_ff': 128,
+        },
+        pairwise_interaction_kws={
+            'n_layers': 2, 'n_heads': 2, 'd_model': 128, 'd_ff': 256,
+        },
+        regulation_kws={
+            'n_layers': 6, 'n_heads': 8, 'd_model': 256, 'd_ff': 256,
+        },
+        binsizes=[2000, 500, 100],
+        seed=42,
+    ):
+        super(ChromoformerBase, self).__init__()
+        torch.manual_seed(seed)
+
+        # Update arguments for each transformer layer.
+        embed_kws['n_feats'] = n_feats
+        embed_kws['d_model'] = d_emb
+        pairwise_interaction_kws['n_feats_p'] = embed_kws['d_model']
+        pairwise_interaction_kws['n_feats_pcre'] = n_feats
+        regulation_kws['d_emb'] = d_emb
+
+        self.binsizes = binsizes
+        self.embed = nn.ModuleDict({
+            str(binsize): EmbeddingTransformer(**embed_kws) for binsize in binsizes
+        })
+        self.pairwise_interaction = nn.ModuleDict({
+            str(binsize): PairwiseInteractionTransformer(**pairwise_interaction_kws) for binsize in binsizes
+        })
+        self.regulation = nn.ModuleDict({
+            str(binsize): RegulationTransformer(**regulation_kws) for binsize in binsizes
+        })
+        self.fc_head = nn.Sequential(
+            nn.Linear(d_emb * 3, d_head),
+            nn.ReLU(),
+            nn.Linear(d_head, 2),
+        )
+
+    def forward(self,
+        promoter_feats,
+        promoter_pad_masks,
+        pcre_feats,
+        pcre_pad_masks,
+        interaction_masks,
+        interaction_freq,
+    ):
+        promoter_embeddings_full, promoter_embeddings_tss = {}, {}
+        for binsize in self.binsizes:
+            layer = self.embed[str(binsize)]
+            p_emb_full, p_emb = layer(promoter_feats[binsize], promoter_pad_masks[binsize])
+            promoter_embeddings_full[binsize] = p_emb_full
+            promoter_embeddings_tss[binsize] = p_emb
+        
+        pairwise_interaction_embeddings = {}
+        for binsize in self.binsizes:
+            layer = self.pairwise_interaction[str(binsize)]
+            pairwise_interaction_embeddings[binsize] = layer(promoter_embeddings_full[binsize], pcre_feats[binsize], pcre_pad_masks[binsize])
+        
+        x_in = {
+            binsize: torch.cat([promoter_embeddings_tss[binsize], pairwise_interaction_embeddings[binsize]], axis=1) for binsize in self.binsizes
+        }
+
+        x_out = {}
+        for binsize in self.binsizes:
+            layer = self.regulation[str(binsize)]
+            x_out[binsize] = layer(x_in[binsize], interaction_masks[binsize], bias=interaction_freq)
+        
+        x = torch.cat([x_out[binsize][:, 0] for binsize in self.binsizes], axis=1)
+        x += torch.cat([x_in[binsize][:, 0] for binsize in self.binsizes], axis=1)
+
+        return self.fc_head(x)
+
+ChromoformerClassifier = ChromoformerBase
+
+class ChromoformerRegressor(ChromoformerBase):
+    def __init__(
+        self, 
+        n_feats=7, d_emb=128, d_head=128,
+        embed_kws={
+            'n_layers': 1, 'n_heads': 2, 'd_model': 128, 'd_ff': 128,
+        },
+        pairwise_interaction_kws={
+            'n_layers': 2, 'n_heads': 2, 'd_model': 128, 'd_ff': 256,
+        },
+        regulation_kws={
+            'n_layers': 6, 'n_heads': 8, 'd_model': 256, 'd_ff': 256,
+        },
+        binsizes=[2000, 500, 100],
+        seed=42,
+    ):
+        super(ChromoformerRegressor, self).__init__(n_feats, d_emb, d_head, embed_kws, pairwise_interaction_kws, regulation_kws, binsizes, seed)
+
+        self.fc_head = nn.Sequential(
+            nn.Linear(d_emb * 3, d_head),
+            nn.ReLU(),
+            nn.Linear(head_n_feats, 1),
+        )
+
 if __name__ == '__main__':
     # import data
     import tqdm
     import pandas as pd
 
-    model = Chromoformer().cuda()
+    model_orig = Chromoformer().cuda()
+    model_classifier = ChromoformerClassifier().cuda()
+    model_regressor = ChromoformerRegressor().cuda()
 
     # Dummy data.
     bsz = 8
@@ -210,9 +316,55 @@ if __name__ == '__main__':
     interaction_mask_2000, interaction_mask_500, interaction_mask_100 = interaction_mask_2000.cuda(), interaction_mask_500.cuda(), interaction_mask_100.cuda()
     interaction_freq = interaction_freq.cuda()
 
-    out = model(
+    out_orig = model_orig(
         x_p_2000, pad_mask_p_2000, x_pcre_2000, pad_mask_pcre_2000, interaction_mask_2000,
         x_p_500, pad_mask_p_500, x_pcre_500, pad_mask_pcre_500, interaction_mask_500,
         x_p_100, pad_mask_p_100, x_pcre_100, pad_mask_pcre_100, interaction_mask_100,
         interaction_freq,
     )
+
+    promoter_feats = {
+        2000: x_p_2000,
+        500: x_p_500,
+        100: x_p_100,
+    }
+    promoter_pad_masks = {
+        2000: pad_mask_p_2000,
+        500: pad_mask_p_500,
+        100: pad_mask_p_100,
+    }
+    pcre_feats = {
+        2000: x_pcre_2000,
+        500: x_pcre_500,
+        100: x_pcre_100,
+    }
+    pcre_pad_masks = {
+        2000: pad_mask_pcre_2000,
+        500: pad_mask_pcre_500,
+        100: pad_mask_pcre_100,
+    }
+    interaction_masks = {
+        2000: interaction_mask_2000,
+        500: interaction_mask_500,
+        100: interaction_mask_100,
+    }
+
+    out_classifier = model_classifier(
+        promoter_feats, promoter_pad_masks, pcre_feats, pcre_pad_masks, interaction_masks, interaction_freq
+    )
+
+    out_regressor = model_regressor(
+        promoter_feats, promoter_pad_masks, pcre_feats, pcre_pad_masks, interaction_masks, interaction_freq
+    )
+
+    print(out_orig.sum())
+    print(out_orig.shape)
+    # -3.1917, [8, 2]
+
+    print(out_classifier.sum())
+    print(out_classifier.shape)
+    # -3.1917, [8, 2]
+
+    print(out_regressor.sum())
+    print(out_regressor.shape)
+    # -0.1900, [8, 1]
