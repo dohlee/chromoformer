@@ -1,5 +1,7 @@
 # Chromoformer
 
+*NOTE: Code refactoring is ongoing. ChromoformerClassifier and ChromoformerRegressor models and relevant training scripts will be updated soon. Model performance will not be affected.*
+
 [![DOI](https://zenodo.org/badge/432363545.svg)](https://zenodo.org/badge/latestdoi/432363545)
 
 This repository provides the official code implementations for Chromoformer.
