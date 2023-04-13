@@ -9,7 +9,7 @@ import yaml
 from tqdm import tqdm
 from sklearn import metrics
 
-from .data import Roadmap3D
+from .data import ChromoformerDataset
 from .net import ChromoformerClassifier, ChromoformerRegressor
 from .util import seed_everything
 
@@ -101,9 +101,7 @@ meta = (
 meta = meta[meta.eid == args.eid]
 
 if args.regression and "expression" not in meta.columns:
-    raise ValueError(
-        "`expression` column is required for training ChromoformerRegression model."
-    )
+    raise ValueError("`expression` column is required for training ChromoformerRegression model.")
 
 # Split genes into two sets (train/val).
 genes = set(meta.gene_id.unique())
@@ -117,9 +115,7 @@ qs = [
     meta[meta.split == 4].gene_id.tolist(),
 ]
 
-train_genes = (
-    qs[(args.fold + 0) % 4] + qs[(args.fold + 1) % 4] + qs[(args.fold + 2) % 4]
-)
+train_genes = qs[(args.fold + 0) % 4] + qs[(args.fold + 1) % 4] + qs[(args.fold + 2) % 4]
 val_genes = qs[(args.fold + 3) % 4]
 
 wandb.config.update(
@@ -131,7 +127,7 @@ wandb.config.update(
 
 print(len(train_genes), len(val_genes))
 
-train_dataset = Roadmap3D(
+train_dataset = ChromoformerDataset(
     args.meta,
     args.eid,
     args.npy_dir,
@@ -142,7 +138,7 @@ train_dataset = Roadmap3D(
     w_max,
     regression=args.regression,
 )
-val_dataset = Roadmap3D(
+val_dataset = ChromoformerDataset(
     args.meta,
     args.eid,
     args.npy_dir,
@@ -287,9 +283,7 @@ for epoch in range(1, num_epoch):
     val_auc = metrics.roc_auc_score(val_label, val_score) * 100
     val_ap = metrics.average_precision_score(val_label, val_score) * 100
 
-    print(
-        f"Validation loss={val_loss:.4f}, acc={val_acc:.4f}, auc={val_auc:.4f}, ap={val_ap:.4f}"
-    )
+    print(f"Validation loss={val_loss:.4f}, acc={val_acc:.4f}, auc={val_auc:.4f}, ap={val_ap:.4f}")
 
     wandb.log(
         {

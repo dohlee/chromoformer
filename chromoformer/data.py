@@ -20,7 +20,7 @@ def split_interval_string(interval_string):
     return chrom, start, end
 
 
-class Roadmap3D(Dataset):
+class ChromoformerDataset(Dataset):
     def __init__(
         self,
         meta,
@@ -33,7 +33,7 @@ class Roadmap3D(Dataset):
         w_max=40000,
         regression=False,
     ):
-        super(Roadmap3D, self).__init__()
+        super(ChromoformerDataset, self).__init__()
 
         self.eid = eid
         self.npy_dir = npy_dir
@@ -43,9 +43,7 @@ class Roadmap3D(Dataset):
         self.meta = meta[meta.eid == self.eid].reset_index(drop=True)
 
         if regression:
-            self.ensg2label = {
-                r.gene_id: np.log2(r.expression + 1) for r in self.meta.to_records()
-            }
+            self.ensg2label = {r.gene_id: np.log2(r.expression + 1) for r in self.meta.to_records()}
         else:
             self.ensg2label = {r.gene_id: r.label for r in self.meta.to_records()}
 
@@ -101,9 +99,7 @@ class Roadmap3D(Dataset):
     def _get_region_representation(
         self, chrom, start, end, bin_size, max_n_bins, strand="+", window=None
     ):
-        x = torch.tensor(
-            np.load(f"{self.npy_dir}/{self.eid}/{chrom}:{start}-{end}.npy")
-        ).float()
+        x = torch.tensor(np.load(f"{self.npy_dir}/{self.eid}/{chrom}:{start}-{end}.npy")).float()
 
         if window is not None:
             x = x[:, 20000 - window // 2 : 20000 + window // 2]
@@ -196,9 +192,7 @@ class Roadmap3D(Dataset):
                 m = torch.ones([1, max_n_bins, max_n_bins], dtype=torch.bool)
                 mask_pcres.append(m)
 
-            interaction_mask = torch.ones(
-                [self.i_max + 1, self.i_max + 1], dtype=torch.bool
-            )
+            interaction_mask = torch.ones([self.i_max + 1, self.i_max + 1], dtype=torch.bool)
             interaction_mask[: n_partners + 1, : n_partners + 1] = 0
 
             item["promoter_feats"][binsize] = x_p
@@ -222,7 +216,7 @@ if __name__ == "__main__":
     target_genes = pd.read_csv(meta).gene_id.unique()
     npy_dir = "../demo/demo_data"
 
-    dataset = Roadmap3D(meta, eid, npy_dir, target_genes)
+    dataset = ChromoformerDataset(meta, eid, npy_dir, target_genes)
     loader = DataLoader(dataset, batch_size=8, num_workers=1, shuffle=False)
 
     for i, d in tqdm.tqdm(enumerate(loader), total=len(loader)):
