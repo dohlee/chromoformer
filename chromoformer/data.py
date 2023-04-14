@@ -24,7 +24,6 @@ class ChromoformerDataset(Dataset):
     def __init__(
         self,
         meta,
-        eid,
         npy_dir,
         target_genes,
         i_max=8,
@@ -35,12 +34,10 @@ class ChromoformerDataset(Dataset):
     ):
         super(ChromoformerDataset, self).__init__()
 
-        self.eid = eid
         self.npy_dir = npy_dir
         self.target_genes = target_genes  # List of ENSGs.
 
-        meta = pd.read_csv(meta)
-        self.meta = meta[meta.eid == self.eid].reset_index(drop=True)
+        self.meta = pd.read_csv(meta)
 
         if regression:
             self.ensg2label = {r.gene_id: np.log2(r.expression + 1) for r in self.meta.to_records()}
@@ -99,7 +96,7 @@ class ChromoformerDataset(Dataset):
     def _get_region_representation(
         self, chrom, start, end, bin_size, max_n_bins, strand="+", window=None
     ):
-        x = torch.tensor(np.load(f"{self.npy_dir}/{self.eid}/{chrom}:{start}-{end}.npy")).float()
+        x = torch.tensor(np.load(f"{self.npy_dir}/{chrom}:{start}-{end}.npy")).float()
 
         if window is not None:
             x = x[:, 20000 - window // 2 : 20000 + window // 2]
@@ -211,12 +208,11 @@ class ChromoformerDataset(Dataset):
 if __name__ == "__main__":
     import tqdm
 
-    meta = "../demo/demo_meta.csv"
-    eid = "E003"
+    meta = "demo/demo_meta.csv"
     target_genes = pd.read_csv(meta).gene_id.unique()
-    npy_dir = "../demo/demo_data"
+    npy_dir = "demo/demo_data"
 
-    dataset = ChromoformerDataset(meta, eid, npy_dir, target_genes)
+    dataset = ChromoformerDataset(meta, npy_dir, target_genes)
     loader = DataLoader(dataset, batch_size=8, num_workers=1, shuffle=False)
 
     for i, d in tqdm.tqdm(enumerate(loader), total=len(loader)):

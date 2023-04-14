@@ -28,7 +28,6 @@ parser.add_argument("-c", "--config", required=True)
 parser.add_argument("--exp-id", required=True)
 parser.add_argument("-m", "--meta", required=True)
 parser.add_argument("-d", "--npy-dir", required=True)
-parser.add_argument("--eid", required=True)
 parser.add_argument("--fold", type=int, required=True)
 parser.add_argument("--binsizes", nargs="+", default=[2000, 500, 100])
 parser.add_argument("--regression", action="store_true", default=False)
@@ -60,45 +59,25 @@ w_prom = config["w_prom"]
 w_max = config["w_max"]
 
 n_feats = config["n_feats"]
-d_emb = config["embed_d_model"]
+d_emb = config["embed"]["d_model"]
+embed_kws = config["embed"]
+pairwise_interaction_kws = config["pairwise_interaction"]
+regulation_kws = config["regulation"]
 
-embed_kws = {
-    "n_layers": config["embed_n_layers"],
-    "n_heads": config["embed_n_heads"],
-    "d_model": config["embed_d_model"],
-    "d_ff": config["embed_d_ff"],
-}
+d_head = config["d_head"]
 
-pairwise_interaction_kws = {
-    "n_layers": config["pw_int_n_layers"],
-    "n_heads": config["pw_int_n_heads"],
-    "d_model": config["pw_int_d_model"],
-    "d_ff": config["pw_int_d_ff"],
-}
-
-regulation_kws = {
-    "n_layers": config["reg_n_layers"],
-    "n_heads": config["reg_n_heads"],
-    "d_model": config["reg_d_model"],
-    "d_ff": config["reg_d_ff"],
-}
-
-d_head = config["head_n_feats"]
-
-group_id = f"{exp_id}-{args.eid}"
 #
 # Setup end.
 #
 
 seed_everything(seed)
-wandb.init(project="chromoformer-refactoring", entity="dohlee", group=group_id)
+wandb.init(project="chromoformer-refactoring", entity="dohlee", group=exp_id)
 wandb.config.update(args)
 wandb.config.update(config)
 
 meta = (
     pd.read_csv(args.meta).sample(frac=1, random_state=seed).reset_index(drop=True)
 )  # load and shuffle.
-meta = meta[meta.eid == args.eid]
 
 if args.regression and "expression" not in meta.columns:
     raise ValueError("`expression` column is required for training ChromoformerRegression model.")
@@ -129,7 +108,6 @@ print(len(train_genes), len(val_genes))
 
 train_dataset = ChromoformerDataset(
     args.meta,
-    args.eid,
     args.npy_dir,
     train_genes,
     i_max,
@@ -140,7 +118,6 @@ train_dataset = ChromoformerDataset(
 )
 val_dataset = ChromoformerDataset(
     args.meta,
-    args.eid,
     args.npy_dir,
     val_genes,
     i_max,

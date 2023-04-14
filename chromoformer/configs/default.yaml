@@ -1,0 +1,32 @@
+seed: 123
+
+# Optimization.
+num_epoch: 10
+lr: 3e-5
+bsz: 64
+gamma: 0.87
+
+# Data processing.
+i_max: 8
+w_prom: 40000
+w_max: 40000
+
+# Model specification.
+n_feats: 7
+embed:
+  n_layers: 1
+  n_heads: 2
+  d_model: 128
+  d_ff: 128
+pairwise_interaction:
+  n_layers: 2
+  n_heads: 2
+  d_model: 128
+  d_ff: 256
+regulation:
+  n_layers: 6
+  n_heads: 8
+  d_model: 256
+  d_ff: 256
+
+d_head: 128

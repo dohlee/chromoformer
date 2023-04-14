@@ -1,7 +1,5 @@
 # Chromoformer
 
-*NOTE: Code refactoring is ongoing. ChromoformerClassifier and ChromoformerRegressor models and relevant training scripts will be updated soon. Model performance will not be affected.*
-
 [![DOI](https://zenodo.org/badge/432363545.svg)](https://zenodo.org/badge/latestdoi/432363545)
 
 This repository provides the official code implementations for Chromoformer.
@@ -24,24 +22,85 @@ There are three transformer-based submodules: Embedding, Pairwise Interaction an
 ![model2](img/model2.png)
 
 ## Installation
-
-First, clone this repository and move to the directory.
-```
-git clone https://github.com/dohlee/chromoformer.git && cd chromoformer
-```
-
-To install the appropriate environment for Chromoformer, you should install [conda](https://docs.conda.io/en/latest/) package manager.
-
-After installing `conda` and placing the `conda` executable in `PATH`, the following command will create `conda` environment named `chromoformer` installed with a GPU-compatible version of `pytorch`. It will take up to 30 minutes to setup the environment, but may vary upon the Internet connection and package cache states.
-```
-conda env create -f environment.yaml && \
-conda activate chromoformer && \
-conda install pytorch==1.9.0 torchvision==0.10.0 torchaudio==0.9.0 cudatoolkit=11.1 -c pytorch -c conda-forge
+You can install the `chromoformer` package using `pip`:
+```bash
+$ pip install chromoformer
 ```
 
-To check whether Chromoformer works properly, please refer the README file in [`demo`](demo) directory and follow the instructions.
+To check whether Chromoformer works properly after installation, please refer the README file in [`demo`](demo) directory and follow the instructions.
+
+## Training from scratch
+
+You can train Chromoformer-clf (Chromoformer model for binary classification of gene expression) from scratch using the command below.
+
+```bash
+$ python -m chromoformer.train --config config.yaml --meta metadata.csv --npy-dir npy_dir \
+    --fold 0 --binsizes 2000 500 100
+```
+
+Chromoformer-reg (Chromoformer model for regression of gene expression in log2-transformed RPKM) can be trained using the command below.
+
+```bash
+$ python -m chromoformer.train --config config.yaml --meta metadata.csv --npy-dir npy_dir \
+    --fold 0 --binsizes 2000 500 100 --regression
+```
+
+
+## Configuration file
+
+The training configuration file is a `yaml` file that contains the following parameters as below (see `configs/default.yaml`):
+
+```yaml
+seed: 123
+# biology
+i_max: 8 # maximum number of interacting genomic regions to consider
+w_prom: 40000 # window size around the core promoter
+w_max: 40000 # maximum window size for regions (promoter and pCREs)
+# optimization
+num_epoch: 10
+lr: 3e-5
+bsz: 64
+gamma: 0.87
+# model
+n_feats: 7
+embed: # Embedding transformer
+  n_layers: 1
+  n_heads: 2
+  d_model: 128
+  d_ff: 128
+pairwise_interaction: # Pairwise Interaction transformer
+  n_layers: 2
+  n_heads: 2
+  d_model: 128
+  d_ff: 256
+regulation: # Regulation transformer
+  n_layers: 6
+  n_heads: 8
+  d_model: 256
+  d_ff: 256
+d_head: 128 # inner dimension of the last fully-connected layer
+```
+
+## Metadata
+
+Metadata file is a `csv` file that contains the following required columns as below (see `metadata.csv`):
+
+| Column name | Description | Example |
+|---|---|---|
+|gene_id|Gene identifier|*ENSG00000116213*|
+|label|Binary expression label. Means that the expression is higher than median (1) or not (0).|*1*|
+|expression|Expression level of the corresponding gene (in RPKM)|*4.554*|
+|chrom|Chromosome where the gene is placed.|*chr1*|
+|start|Zero-based, inclusive coordinate of gene start|*3566667*|
+|end|Zero-based, exclusive coordinate of gene end|3566668|
+|strand|Direction of transcription. '+' for forward and '-' for reverse.|*+*|
+|split|Group label for cross-validation. Note that we must use chromosomal split to avoid information leak during performance evaulation (i.e., no two genes in train/val set are on the same chromosome).|*0*|
+|neighbors|A list of genomic regions interacting with the promoter. Should be joined by ';'|*chr1:14589068-14595292;chr1:13973835-13979555*|
+|scores|Normalized interaction frequencies.|1.5494|
 
 ## Pretrained weights
+
+*NOTE: Due to the recent update, the names of pretrained weights at the moment may not match with the paramters of ChromoformerClassifier and ChromoformerRegressor model, so you cannot directly use them. We will fix this issue soon.*
 
 ![pretrained_weights_doi](https://img.shields.io/badge/doi-10.6084%2Fm9.figshare.19424807.v1-blue)
 

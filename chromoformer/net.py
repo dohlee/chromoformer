@@ -7,9 +7,7 @@ from .modules import Transformer, PairwiseTransformer
 
 
 class EmbeddingTransformer(nn.Module):
-    def __init__(
-        self, n_feats, n_layers, n_heads, d_model, d_ff, pos_enc=True, activation=F.relu
-    ):
+    def __init__(self, n_feats, n_layers, n_heads, d_model, d_ff, pos_enc=True, activation=F.relu):
         super(EmbeddingTransformer, self).__init__()
 
         self.d_model = d_model
@@ -140,14 +138,10 @@ class PairwiseInteractionTransformer(nn.Module):
 
 
 class RegulationTransformer(nn.Module):
-    def __init__(
-        self, n_layers, n_heads, d_emb, d_model, d_ff, pos_enc=True, activation=F.relu
-    ):
+    def __init__(self, n_layers, n_heads, d_emb, d_model, d_ff, pos_enc=True, activation=F.relu):
         super(RegulationTransformer, self).__init__()
 
-        self.transformer = Transformer(
-            n_layers, n_heads, d_emb, d_model, d_ff, gate=True
-        )
+        self.transformer = Transformer(n_layers, n_heads, d_emb, d_model, d_ff, gate=True)
 
     def forward(self, x, mask, bias):
         return self.transformer(x, mask, bias)
@@ -248,9 +242,7 @@ class Chromoformer(nn.Module):
         p_emb_500_total, p_emb_500 = self.embed500(x_p_500, pad_mask_p_500)
         p_emb_100_total, p_emb_100 = self.embed100(x_p_100, pad_mask_p_100)
 
-        pw_int_emb_2000 = self.pw_int2000(
-            p_emb_2000_total, x_pcre_2000, pad_mask_pcre_2000
-        )
+        pw_int_emb_2000 = self.pw_int2000(p_emb_2000_total, x_pcre_2000, pad_mask_pcre_2000)
         pw_int_emb_500 = self.pw_int500(p_emb_500_total, x_pcre_500, pad_mask_pcre_500)
         pw_int_emb_100 = self.pw_int100(p_emb_100_total, x_pcre_100, pad_mask_pcre_100)
 
@@ -318,10 +310,7 @@ class ChromoformerBase(nn.Module):
             }
         )
         self.regulation = nn.ModuleDict(
-            {
-                str(binsize): RegulationTransformer(**regulation_kws)
-                for binsize in binsizes
-            }
+            {str(binsize): RegulationTransformer(**regulation_kws) for binsize in binsizes}
         )
         self.fc_head = nn.Sequential(
             nn.Linear(d_emb * 3, d_head),
@@ -341,9 +330,7 @@ class ChromoformerBase(nn.Module):
         promoter_embeddings_full, promoter_embeddings_tss = {}, {}
         for binsize in self.binsizes:
             layer = self.embed[str(binsize)]
-            p_emb_full, p_emb = layer(
-                promoter_feats[binsize], promoter_pad_masks[binsize]
-            )
+            p_emb_full, p_emb = layer(promoter_feats[binsize], promoter_pad_masks[binsize])
             promoter_embeddings_full[binsize] = p_emb_full
             promoter_embeddings_tss[binsize] = p_emb
 
@@ -370,9 +357,7 @@ class ChromoformerBase(nn.Module):
         x_out = {}
         for binsize in self.binsizes:
             layer = self.regulation[str(binsize)]
-            x_out[binsize] = layer(
-                x_in[binsize], interaction_masks[binsize], bias=interaction_freq
-            )
+            x_out[binsize] = layer(x_in[binsize], interaction_masks[binsize], bias=interaction_freq)
 
         x = torch.cat([x_out[binsize][:, 0] for binsize in self.binsizes], axis=1)
         x += torch.cat([x_in[binsize][:, 0] for binsize in self.binsizes], axis=1)
@@ -430,9 +415,6 @@ class ChromoformerRegressor(ChromoformerBase):
 
 if __name__ == "__main__":
     # import data
-    import tqdm
-    import pandas as pd
-
     model_orig = Chromoformer().cuda()
     model_classifier = ChromoformerClassifier().cuda()
     model_regressor = ChromoformerRegressor().cuda()
