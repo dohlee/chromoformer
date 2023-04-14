@@ -38,7 +38,7 @@ $ python -m chromoformer.train --config config.yaml --meta metadata.csv --npy-di
     --fold 0 --binsizes 2000 500 100
 ```
 
-Chromoformer-reg (Chromoformer model for regression of gene expression in log2-transformed RPKM) can be trained using the command below.
+Chromoformer-reg (Chromoformer model for regression of gene expression in log2-transformed RPKM) can be trained using the command below. (Note the `--regression` flag.)
 
 ```bash
 $ python -m chromoformer.train --config config.yaml --meta metadata.csv --npy-dir npy_dir \
