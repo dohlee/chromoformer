@@ -50,21 +50,18 @@ You can now run the gene expression prediction for the 100 genes simply by the s
 In the commandline (with the `chromoformer` environment enabled), run the following command, and it will finish shortly (~10s):
 
 ```shell
-python run_demo.py \
-    -i demo_meta.csv \
-    -o demo_meta.predicted.csv \
+python run_demo.py -m demo_meta.csv -d demo_data -o demo_meta.predicted.csv \
     -w chromoformer-reproduction-E003-conf1-fold1.pt \
-    -e E003
 ```
 
 *Warning*: Please note that the provided demo script (`run_demo.py`) expects GPU-enabled environment, otherwise it may throw error. 
 
 Parameters for `run_demo.py` are described as below:
 
-- `-i, --input` : Path to input metadata CSV file.
-- `-o, --output` :  Path to output metadata annotated with 'prediction column'.
+- `-m, --meta` : Path to input metadata CSV file.
+- `-d, --npy-dir` : Path to directory containing region-wise histone modification levels in .npy format.
 - `-w, --weights` : Path to pretrained Chromoformer weights in .pt format
-- `-e, --eid` : Specify cell type in Roadmap Epigenomics EID.
+- `-o, --output` :  Path to output metadata annotated with 'prediction column'.
 
 
 ### Expected result
@@ -82,10 +79,7 @@ This can be simply examined by comparing the performance with untrained/fresh mo
 You can run the prediction using a newly-initialized (i.e., untrained) Chromoformer model and compare the results.
 
 ```shell
-python run_demo.py \
-    -i demo_meta.csv \
-    -o demo_meta.predicted.csv \
-    -e E003
+python run_demo.py -m demo_meta.csv -d demo_data -o random_prediction.out
 ```
 
 ### Expected result
