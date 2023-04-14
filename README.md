@@ -91,12 +91,12 @@ Metadata file is a `csv` file that contains the following required columns as be
 |label|Binary expression label. Means that the expression is higher than median (1) or not (0).|*1*|
 |expression|Expression level of the corresponding gene (in RPKM)|*4.554*|
 |chrom|Chromosome where the gene is placed.|*chr1*|
-|start|Zero-based, inclusive coordinate of gene start|*3566667*|
-|end|Zero-based, exclusive coordinate of gene end|3566668|
+|start|Zero-based, inclusive coordinate of TSS|*3566667*|
+|end|Zero-based, exclusive coordinate of TSS (trivially should be start+1)|*3566668*|
 |strand|Direction of transcription. '+' for forward and '-' for reverse.|*+*|
 |split|Group label for cross-validation. Note that we must use chromosomal split to avoid information leak during performance evaulation (i.e., no two genes in train/val set are on the same chromosome).|*0*|
 |neighbors|A list of genomic regions interacting with the promoter. Should be joined by ';'|*chr1:14589068-14595292;chr1:13973835-13979555*|
-|scores|Normalized interaction frequencies.|1.5494|
+|scores|Normalized interaction frequencies for each neghbor in `neighbors` columns. Should be joined by ';'|*1.5494*|
 
 ## Pretrained weights
 
