@@ -3,6 +3,7 @@
 ![banner](img/chromoformer_banner_small.png)
 
 [![DOI](https://zenodo.org/badge/432363545.svg)](https://zenodo.org/badge/latestdoi/432363545)
+[![PyPI version](https://badge.fury.io/py/chromoformer.svg)](https://badge.fury.io/py/chromoformer)
 
 This repository provides the official code implementations for Chromoformer.
 
