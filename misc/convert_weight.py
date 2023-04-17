@@ -1,5 +1,6 @@
 import argparse
 import torch
+import os
 
 from copy import deepcopy
 
@@ -25,6 +26,9 @@ def main():
         if "reg" in k:
             new_ckpt["net"][k.replace("reg", "regulation.")] = net[k]
             new_ckpt["net"].pop(k)
+
+    if not os.path.exists(os.path.dirname(args.output)):
+        os.makedirs(os.path.dirname(args.output))
 
     torch.save(new_ckpt, args.output)
 
