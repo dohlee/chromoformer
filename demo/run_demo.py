@@ -1,16 +1,26 @@
 import argparse
 import torch
+import random
+import os
 
 import numpy as np
 import pandas as pd
 
 from chromoformer import ChromoformerDataset
 from chromoformer import ChromoformerClassifier
-from net import Chromoformer
 from tqdm import tqdm
 from sklearn import metrics
 
-from util import seed_everything
+
+def seed_everything(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)  # type: ignore
+    torch.backends.cudnn.deterministic = True  # type: ignore
+    torch.backends.cudnn.benchmark = True  # type: ignore
+
 
 # Argument parsing.
 parser = argparse.ArgumentParser()
