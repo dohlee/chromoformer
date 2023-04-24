@@ -103,9 +103,9 @@ Metadata file is a `csv` file that contains the following required columns as be
 
 ## Pretrained weights
 
-[![pretrained_weights_doi](https://img.shields.io/badge/doi-10.6084%2Fm9.figshare.19424807.v3-blue)](https://doi.org/10.6084/m9.figshare.19424807.v3)
+[![pretrained_weights_doi](https://img.shields.io/badge/doi-10.6084%2Fm9.figshare.19424807.v4-blue)](https://doi.org/10.6084/m9.figshare.19424807.v4)
 
-Pretrained weights for Chromoformer models (for Chromoformer-clf and Chromoformer-reg) are available at https://doi.org/10.6084/m9.figshare.19424807.v3.
+Pretrained weights for Chromoformer models (for Chromoformer-clf and Chromoformer-reg) are available at https://doi.org/10.6084/m9.figshare.19424807.v4.
 Models were individually trained for 11 cell types from Roadmap Epigenomics Project. For each cell type, 18955 protein coding genes were divided into four non-overlapping cross-validation (CV) sets, and trained weights for each cross-validation fold is provided in this dataset.
 
 The directory is organized firstly by Roadmap Epigenomics cell type (using corresponding EID), and four `pytorch` checkpoint files (a `.pt` file for each CV-fold) are placed in each directory.

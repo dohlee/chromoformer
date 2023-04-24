@@ -552,5 +552,8 @@ if __name__ == "__main__":
     print(out_regressor.shape)
     # -0.1900, [8, 1]
 
-    ckpt = torch.load("test.pt")
-    model_classifier.load_state_dict(ckpt["net"])
+    # ckpt = torch.load("test.pt")
+    # model_classifier.load_state_dict(ckpt["net"])
+
+    ckpt = torch.load('converted/E003/chromoformer-reg-reproduction-E003-conf1-fold1.pt')
+    model_regressor.load_state_dict(ckpt["net"])
