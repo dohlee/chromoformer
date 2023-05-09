@@ -7,6 +7,7 @@ import wandb
 import yaml
 
 from tqdm import tqdm
+from scipy import stats
 from sklearn import metrics
 
 from .data import ChromoformerDataset
@@ -146,14 +147,13 @@ model = Model(
 
 model.cuda()
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.MSELoss() if args.regression else nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=float(config["lr"]))
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=gamma)
 
 optimizer.zero_grad()
 optimizer.step()
 
-best_val_auc = 0
 for epoch in range(1, num_epoch):
     # Prepare train.
     bar = tqdm(enumerate(train_loader, 1), total=len(train_loader))
@@ -196,28 +196,47 @@ for epoch in range(1, num_epoch):
             batch_loss = running_loss / 10.0
 
             train_out, train_label = map(torch.cat, (train_out, train_label))
-            train_score = train_out.softmax(axis=1)[:, 1]
-            train_pred = train_out.argmax(axis=1)
 
-            batch_acc = metrics.accuracy_score(train_label, train_pred) * 100
-            batch_auc = metrics.roc_auc_score(train_label, train_score) * 100
-            batch_ap = metrics.average_precision_score(train_label, train_score) * 100
+            if args.regression:
+                train_pred = train_out.flatten()
 
-            bar.set_description(
-                f"E{epoch} {batch_loss:.4f}, lr={get_lr(optimizer)}, acc={batch_acc:.4f}, auc={batch_auc:.4f}, ap={batch_ap:.4f}"
-            )
+                batch_r2 = metrics.r2_score(train_label, train_pred) * 100
+                batch_r = stats.pearsonr(train_label, train_pred)[0] * 100
+
+                bar.set_description(
+                    f"E{epoch} {batch_loss:.4f}, lr={get_lr(optimizer)}, r2={batch_r2:.4f}, r={batch_r:.4f}"
+                )
+
+                wandb.log(
+                    {
+                        "train/loss": batch_loss,
+                        "train/r2": batch_r2,
+                        "train/r": batch_r,
+                    }
+                )
+            else:
+                train_score = train_out.softmax(axis=1)[:, 1]
+                train_pred = train_out.argmax(axis=1)
+
+                batch_acc = metrics.accuracy_score(train_label, train_pred) * 100
+                batch_auc = metrics.roc_auc_score(train_label, train_score) * 100
+                batch_ap = metrics.average_precision_score(train_label, train_score) * 100
+
+                bar.set_description(
+                    f"E{epoch} {batch_loss:.4f}, lr={get_lr(optimizer)}, acc={batch_acc:.4f}, auc={batch_auc:.4f}, ap={batch_ap:.4f}"
+                )
+
+                wandb.log(
+                    {
+                        "train/loss": batch_loss,
+                        "train/acc": batch_acc,
+                        "train/auc": batch_auc,
+                        "train/ap": batch_ap,
+                    }
+                )
 
             running_loss = 0.0
             train_out, train_label = [], []
-
-            wandb.log(
-                {
-                    "train/loss": batch_loss,
-                    "train/acc": batch_acc,
-                    "train/auc": batch_auc,
-                    "train/ap": batch_ap,
-                }
-            )
 
     # Prepare validation.
     bar = tqdm(enumerate(val_loader, 1), total=len(val_loader))
@@ -253,40 +272,76 @@ for epoch in range(1, num_epoch):
 
     # Metrics.
     val_label = val_label.numpy()
-    val_score = val_out.softmax(axis=1)[:, 1].numpy()
-    val_pred = val_out.argmax(axis=1).numpy()
+    if args.regression:
+        val_score = val_out.flatten().numpy()
 
-    val_acc = metrics.accuracy_score(val_label, val_pred) * 100
-    val_auc = metrics.roc_auc_score(val_label, val_score) * 100
-    val_ap = metrics.average_precision_score(val_label, val_score) * 100
+        val_r2 = metrics.r2_score(val_label, val_score) * 100
+        val_r = stats.pearsonr(val_label, val_score)[0] * 100
 
-    print(f"Validation loss={val_loss:.4f}, acc={val_acc:.4f}, auc={val_auc:.4f}, ap={val_ap:.4f}")
+        print(f"Validation loss={val_loss:.4f}, r2={val_r2:.4f}, r={val_r:.4f}")
+        wandb.log(
+            {
+                "val/loss": val_loss,
+                "val/r2": val_r2,
+                "val/r": val_r,
+            }
+        )
+    else:
+        val_score = val_out.softmax(axis=1)[:, 1].numpy()
+        val_pred = val_out.argmax(axis=1).numpy()
 
-    wandb.log(
-        {
-            "val/loss": val_loss,
-            "val/acc": val_acc,
-            "val/auc": val_auc,
-            "val/ap": val_ap,
-            "val/epoch": epoch,
+        val_acc = metrics.accuracy_score(val_label, val_pred) * 100
+        val_auc = metrics.roc_auc_score(val_label, val_score) * 100
+        val_ap = metrics.average_precision_score(val_label, val_score) * 100
+
+        print(
+            f"Validation loss={val_loss:.4f}, acc={val_acc:.4f}, auc={val_auc:.4f}, ap={val_ap:.4f}"
+        )
+        wandb.log(
+            {
+                "val/loss": val_loss,
+                "val/acc": val_acc,
+                "val/auc": val_auc,
+                "val/ap": val_ap,
+                "val/epoch": epoch,
+            }
+        )
+
+    if args.regression:
+        ckpt = {
+            "net": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "epoch": epoch,
+            "last_val_loss": val_loss,
+            "last_val_r2": val_r2,
+            "val_score": val_score,
+            "val_label": val_label,
         }
-    )
-
-    ckpt = {
-        "net": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "epoch": epoch,
-        "last_val_loss": val_loss,
-        "last_val_auc": val_auc,
-        "val_score": val_score,
-        "val_label": val_label,
-    }
-    torch.save(ckpt, args.output)
+        torch.save(ckpt, args.output)
+    else:
+        ckpt = {
+            "net": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "epoch": epoch,
+            "last_val_loss": val_loss,
+            "last_val_auc": val_auc,
+            "val_score": val_score,
+            "val_label": val_label,
+        }
+        torch.save(ckpt, args.output)
     scheduler.step()
 
-wandb.summary.update(
-    {
-        "last_val_loss": val_loss,
-        "last_val_auc": val_auc,
-    }
-)
+if args.regression:
+    wandb.summary.update(
+        {
+            "last_val_loss": val_loss,
+            "last_val_r2": val_r2,
+        }
+    )
+else:
+    wandb.summary.update(
+        {
+            "last_val_loss": val_loss,
+            "last_val_auc": val_auc,
+        }
+    )
