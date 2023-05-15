@@ -26,6 +26,7 @@ class ChromoformerDataset(Dataset):
         meta,
         npy_dir,
         target_genes,
+        n_feats=7,
         i_max=8,
         binsizes=[2000, 500, 100],
         w_prom=40000,
@@ -35,6 +36,7 @@ class ChromoformerDataset(Dataset):
         super(ChromoformerDataset, self).__init__()
 
         self.npy_dir = npy_dir
+        self.n_feats = n_feats
         self.target_genes = target_genes  # List of ENSGs.
 
         self.meta = pd.read_csv(meta)
@@ -143,7 +145,7 @@ class ChromoformerDataset(Dataset):
                 window=self.w_prom,
             )
 
-            x_p = x_p.permute(1, 0).unsqueeze(0)  # 1 x max_n_bins x 7
+            x_p = x_p.permute(1, 0).unsqueeze(0)  # 1 x max_n_bins x n_feats
 
             mask_p = torch.ones([1, max_n_bins, max_n_bins], dtype=torch.bool)
             mask_p[
@@ -181,7 +183,7 @@ class ChromoformerDataset(Dataset):
 
                 interaction_freq[0, i + 1] = score
 
-            x_pcres.append(torch.zeros([7, n_dummies * max_n_bins]))
+            x_pcres.append(torch.zeros([self.n_feats, n_dummies * max_n_bins]))
             x_pcres = torch.cat(x_pcres, axis=1).view(-1, self.i_max, max_n_bins)
             x_pcres = x_pcres.permute(1, 2, 0)  # i_max x max_n_bins x 7
 
