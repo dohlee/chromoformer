@@ -81,7 +81,9 @@ meta = (
 )  # load and shuffle.
 
 if args.regression and "expression" not in meta.columns:
-    raise ValueError("`expression` column is required for training ChromoformerRegression model.")
+    raise ValueError(
+        "`expression` column is required for training ChromoformerRegression model."
+    )
 
 # Split genes into two sets (train/val).
 genes = set(meta.gene_id.unique())
@@ -95,7 +97,9 @@ qs = [
     meta[meta.split == 4].gene_id.tolist(),
 ]
 
-train_genes = qs[(args.fold + 0) % 4] + qs[(args.fold + 1) % 4] + qs[(args.fold + 2) % 4]
+train_genes = (
+    qs[(args.fold + 0) % 4] + qs[(args.fold + 1) % 4] + qs[(args.fold + 2) % 4]
+)
 val_genes = qs[(args.fold + 3) % 4]
 
 wandb.config.update(
@@ -172,6 +176,9 @@ for epoch in range(1, num_epoch):
             else:
                 d[k] = v.cuda()
 
+        if args.regression:
+            d["label"] = d["label"].view(-1, 1)
+
         optimizer.zero_grad()
 
         out = model(
@@ -201,6 +208,7 @@ for epoch in range(1, num_epoch):
 
             if args.regression:
                 train_pred = train_out.flatten()
+                train_label = train_label.flatten()
 
                 batch_r2 = metrics.r2_score(train_label, train_pred) * 100
                 batch_r = stats.pearsonr(train_label, train_pred)[0] * 100
@@ -222,7 +230,9 @@ for epoch in range(1, num_epoch):
 
                 batch_acc = metrics.accuracy_score(train_label, train_pred) * 100
                 batch_auc = metrics.roc_auc_score(train_label, train_score) * 100
-                batch_ap = metrics.average_precision_score(train_label, train_score) * 100
+                batch_ap = (
+                    metrics.average_precision_score(train_label, train_score) * 100
+                )
 
                 bar.set_description(
                     f"E{epoch} {batch_loss:.4f}, lr={get_lr(optimizer)}, acc={batch_acc:.4f}, auc={batch_auc:.4f}, ap={batch_ap:.4f}"

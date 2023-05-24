@@ -40,9 +40,12 @@ class ChromoformerDataset(Dataset):
         self.target_genes = target_genes  # List of ENSGs.
 
         self.meta = pd.read_csv(meta)
+        self.regression = regression
 
-        if regression:
-            self.ensg2label = {r.gene_id: np.log2(r.expression + 1) for r in self.meta.to_records()}
+        if self.regression:
+            self.ensg2label = {
+                r.gene_id: np.log2(r.expression + 1) for r in self.meta.to_records()
+            }
         else:
             self.ensg2label = {r.gene_id: r.label for r in self.meta.to_records()}
 
@@ -119,7 +122,10 @@ class ChromoformerDataset(Dataset):
         n_partners, n_dummies = len(pcres), self.i_max - len(pcres)
 
         item = {}
-        item["label"] = self.ensg2label[target_gene]
+        if self.regression:
+            item["label"] = torch.tensor(self.ensg2label[target_gene]).float()
+        else:
+            item["label"] = torch.tensor(self.ensg2label[target_genes]).long()
 
         item["promoter_feats"] = {}
         item["promoter_pad_masks"] = {}
@@ -191,7 +197,9 @@ class ChromoformerDataset(Dataset):
                 m = torch.ones([1, max_n_bins, max_n_bins], dtype=torch.bool)
                 mask_pcres.append(m)
 
-            interaction_mask = torch.ones([self.i_max + 1, self.i_max + 1], dtype=torch.bool)
+            interaction_mask = torch.ones(
+                [self.i_max + 1, self.i_max + 1], dtype=torch.bool
+            )
             interaction_mask[: n_partners + 1, : n_partners + 1] = 0
 
             item["promoter_feats"][binsize] = x_p
