@@ -4,7 +4,7 @@ setup(
     name="chromoformer",
     packages=find_packages(exclude=[]),
     include_package_data=True,
-    version="1.1.2",
+    version="1.1.3",
     license="MIT",
     description="Chromoformer - Pytorch",
     author="Dohoon Lee",
