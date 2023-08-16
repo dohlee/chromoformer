@@ -76,7 +76,7 @@ n_genes = len(genes)
 print(f"Predicting expressions for {n_genes} genes.")
 
 test_dataset = ChromoformerDataset(
-    args.meta, args.npy_dir, genes, i_max, w_prom=w_prom, w_max=w_max
+    args.meta, args.npy_dir, genes, n_feats=7, i_max=i_max, w_prom=w_prom, w_max=w_max
 )
 test_loader = torch.utils.data.DataLoader(
     test_dataset, batch_size=bsz, num_workers=8, shuffle=False, drop_last=False

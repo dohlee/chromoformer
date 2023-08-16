@@ -125,7 +125,7 @@ class ChromoformerDataset(Dataset):
         if self.regression:
             item["label"] = torch.tensor(self.ensg2label[target_gene]).float()
         else:
-            item["label"] = torch.tensor(self.ensg2label[target_genes]).long()
+            item["label"] = torch.tensor(self.ensg2label[target_gene]).long()
 
         item["promoter_feats"] = {}
         item["promoter_pad_masks"] = {}
